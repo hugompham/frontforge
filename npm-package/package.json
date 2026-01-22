@@ -1,0 +1,51 @@
+{
+  "name": "frontforge",
+  "version": "0.1.0",
+  "description": "A beautiful, interactive CLI for scaffolding modern frontend projects",
+  "keywords": [
+    "cli",
+    "frontend",
+    "scaffold",
+    "react",
+    "vue",
+    "angular",
+    "svelte",
+    "solid",
+    "vite",
+    "typescript",
+    "tui",
+    "bubbletea"
+  ],
+  "bin": {
+    "frontforge": "bin/cli.js",
+    "create-frontend-app": "bin/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js",
+    "preuninstall": "node scripts/uninstall.js"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hugompham/frontforge.git"
+  },
+  "author": "hugompham",
+  "license": "MIT",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

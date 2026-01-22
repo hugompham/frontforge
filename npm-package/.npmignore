@@ -1,0 +1,37 @@
+# Source files
+src/
+internal/
+*.go
+go.mod
+go.sum
+Makefile
+
+# Build artifacts
+*.test
+*.out
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation (keep only README.md and PACKAGE_VERSIONS.md)
+*.md
+!README.md
+!PACKAGE_VERSIONS.md
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Other
+node_modules/
+coverage/
+.env
+.env.local
