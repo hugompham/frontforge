@@ -184,15 +184,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Batch the generation command with spinner tick to keep animation running
 		return m, tea.Batch(
 			func() tea.Msg {
-				// Ensure animation is visible (5 seconds for forging animation)
+				// Brief animation feedback (500ms max)
 				start := time.Now()
 
 				// Generate the project
 				err := generators.SetupProject(m.config)
 
-				// Ensure minimum display time for animation
+				// Brief minimum display for visual feedback
 				elapsed := time.Since(start)
-				minDisplayTime := 5 * time.Second
+				minDisplayTime := 500 * time.Millisecond
 				if elapsed < minDisplayTime {
 					time.Sleep(minDisplayTime - elapsed)
 				}
