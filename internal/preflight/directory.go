@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // CheckDirectoryConflicts verifies the target directory is safe to use
@@ -28,6 +29,15 @@ func CheckDirectoryConflicts(projectPath string) CheckResult {
 		result.Passed = false
 		result.Message = fmt.Sprintf("Invalid project path: %s", projectPath)
 		result.Suggestion = "Use a valid directory path"
+		result.Fatal = true
+		return result
+	}
+
+	// Validate path safety - prevent system directory usage
+	if err := validatePathSafety(absPath); err != nil {
+		result.Passed = false
+		result.Message = err.Error()
+		result.Suggestion = "Choose a path in your home or project directory"
 		result.Fatal = true
 		return result
 	}
@@ -82,4 +92,48 @@ func CheckDirectoryConflicts(projectPath string) CheckResult {
 	result.Message = fmt.Sprintf("Directory already exists with %d file(s)", len(entries))
 	result.Suggestion = "Choose a different directory name or remove existing files"
 	return result
+}
+
+// validatePathSafety ensures the path is not in a dangerous system location
+func validatePathSafety(absPath string) error {
+	normalizedPath := filepath.Clean(absPath)
+
+	// Allow paths in system temporary directory
+	tempDir := filepath.Clean(os.TempDir())
+	if strings.HasPrefix(normalizedPath, tempDir+string(filepath.Separator)) ||
+		normalizedPath == tempDir {
+		return nil
+	}
+
+	// Forbidden system directories
+	forbiddenPaths := []string{
+		"/",
+		"/bin",
+		"/boot",
+		"/dev",
+		"/etc",
+		"/lib",
+		"/lib64",
+		"/proc",
+		"/root",
+		"/sbin",
+		"/sys",
+		"/usr",
+		"/var",
+		"/System",           // macOS
+		"/Library",          // macOS
+		"/Applications",     // macOS
+		"C:\\Windows",       // Windows
+		"C:\\Program Files", // Windows
+	}
+
+	for _, forbidden := range forbiddenPaths {
+		normalizedForbidden := filepath.Clean(forbidden)
+		if normalizedPath == normalizedForbidden ||
+			strings.HasPrefix(normalizedPath, normalizedForbidden+string(filepath.Separator)) {
+			return fmt.Errorf("cannot create project in system directory: %s", forbidden)
+		}
+	}
+
+	return nil
 }
