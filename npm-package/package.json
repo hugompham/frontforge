@@ -1,6 +1,6 @@
 {
   "name": "frontforge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A beautiful, interactive CLI for scaffolding modern frontend projects",
   "keywords": [
     "cli",
