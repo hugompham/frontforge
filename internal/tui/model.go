@@ -453,7 +453,7 @@ func (m *Model) createForm() *huh.Form {
 					huh.NewOption("GSAP (any framework)", models.AnimationGSAP),
 					huh.NewOption("Auto Animate", models.AnimationAutoAnimate),
 					huh.NewOption("React Spring", models.AnimationReactSpring),
-						huh.NewOption("None", models.AnimationNone),
+					huh.NewOption("None", models.AnimationNone),
 				).
 				Value(&m.formState.Animation),
 		).WithHideFunc(func() bool {
