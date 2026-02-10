@@ -1,0 +1,37 @@
+// Variables
+$primary-color: #007bff;
+$primary-hover: #0056b3;
+$text-color: #333;
+$spacing: 1rem;
+
+// Mixins
+@mixin button-styles {
+  padding: $spacing * 0.5 $spacing;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+// Styles
+.app {
+  text-align: center;
+  padding: $spacing * 2;
+
+  .title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: $spacing;
+    color: $text-color;
+  }
+
+  .button {
+    @include button-styles;
+    background-color: $primary-color;
+    color: white;
+
+    &:hover {
+      background-color: $primary-hover;
+    }
+  }
+}
