@@ -246,6 +246,22 @@ func SetupProject(config models.Config) error {
 		return fmt.Errorf("failed to generate ESLint config: %w", err)
 	}
 
+	// Run post-generation validation
+	validationResults := ValidateProject(projectPath, config)
+	failedChecks := 0
+	for _, result := range validationResults {
+		if !result.Passed {
+			failedChecks++
+			if !config.DryRun {
+				fmt.Printf("  Warning: %s - %s\n", result.Check, result.Message)
+			}
+		}
+	}
+
+	if failedChecks > 0 && !config.DryRun {
+		fmt.Printf("\nValidation completed with %d warning(s). Project may not work correctly.\n", failedChecks)
+	}
+
 	// Mark generation as successful - prevents cleanup
 	success = true
 	return nil
