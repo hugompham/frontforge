@@ -215,36 +215,76 @@ func SetupProject(config models.Config) error {
 	}
 
 	// Generate README
-	readme := generateREADME(config)
+	readme, err := templates.Render("static/README.md.tmpl", config)
+	if err != nil {
+		return fmt.Errorf("failed to generate README: %w", err)
+	}
 	if err := writeOrCollect(filepath.Join(projectPath, "README.md"), readme); err != nil {
 		return fmt.Errorf("failed to write README.md: %w", err)
 	}
 
 	// Generate Tailwind config if needed
 	if config.Styling == models.StylingTailwind {
-		if err := generateTailwindConfig(projectPath, config, writeOrCollect); err != nil {
+		indexCSS, err := templates.RenderStatic("static/index.css")
+		if err != nil {
 			return fmt.Errorf("failed to generate Tailwind config: %w", err)
+		}
+		if err := writeOrCollect(filepath.Join(projectPath, "src", "index.css"), indexCSS); err != nil {
+			return fmt.Errorf("failed to write Tailwind config: %w", err)
 		}
 	}
 
 	// Generate CSS Modules example if needed
 	if config.Styling == models.StylingCSSModules {
-		if err := generateCSSModulesExample(projectPath, config, writeOrCollect); err != nil {
+		appModuleCSS, err := templates.RenderStatic("static/App.module.css")
+		if err != nil {
 			return fmt.Errorf("failed to generate CSS Modules example: %w", err)
+		}
+		if err := writeOrCollect(filepath.Join(projectPath, "src", "App.module.css"), appModuleCSS); err != nil {
+			return fmt.Errorf("failed to write CSS Modules example: %w", err)
 		}
 	}
 
 	// Generate Sass example if needed
 	if config.Styling == models.StylingSass {
-		if err := generateSassExample(projectPath, config, writeOrCollect); err != nil {
+		stylesScss, err := templates.RenderStatic("static/styles.scss")
+		if err != nil {
 			return fmt.Errorf("failed to generate Sass example: %w", err)
+		}
+		if err := writeOrCollect(filepath.Join(projectPath, "src", "styles.scss"), stylesScss); err != nil {
+			return fmt.Errorf("failed to write Sass example: %w", err)
 		}
 	}
 
 	// Generate Vitest config if needed
 	if config.Testing == models.TestingVitest {
-		if err := generateVitestConfig(projectPath, config, mkdirOrCollect, writeOrCollect); err != nil {
+		ext := "js"
+		if config.Language == models.LangTypeScript {
+			ext = "ts"
+		}
+
+		// Generate vitest config
+		vitestConfig, err := templates.RenderVitestConfig(config)
+		if err != nil {
 			return fmt.Errorf("failed to generate Vitest config: %w", err)
+		}
+		if err := writeOrCollect(filepath.Join(projectPath, fmt.Sprintf("vitest.config.%s", ext)), vitestConfig); err != nil {
+			return fmt.Errorf("failed to write Vitest config: %w", err)
+		}
+
+		// Create test directory
+		testDir := filepath.Join(projectPath, "src", "test")
+		if err := mkdirOrCollect(testDir); err != nil {
+			return fmt.Errorf("failed to create test directory: %w", err)
+		}
+
+		// Generate test setup
+		setupFile, err := templates.RenderVitestSetup(config)
+		if err != nil {
+			return fmt.Errorf("failed to generate Vitest setup: %w", err)
+		}
+		if err := writeOrCollect(filepath.Join(testDir, fmt.Sprintf("setup.%s", ext)), setupFile); err != nil {
+			return fmt.Errorf("failed to write Vitest setup: %w", err)
 		}
 	}
 
@@ -291,323 +331,4 @@ func writeJSON(path string, data interface{}) error {
 	return os.WriteFile(path, bytes, 0644)
 }
 
-func generateGitignore() string {
-	return `# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-`
-}
-
-func generateREADME(config models.Config) string {
-	pmRun := config.PackageManager
-	if config.PackageManager == models.PackageManagerNpm {
-		pmRun = "npm run"
-	}
-
-	structureExample := ""
-	if config.Structure == models.StructureFeatureBased {
-		ext := "jsx"
-		if config.Language == models.LangTypeScript {
-			ext = "tsx"
-		}
-		structureExample = fmt.Sprintf("```\nsrc/\n├── features/          # Feature-based modules\n│   ├── auth/\n│   ├── dashboard/\n│   └── users/\n├── components/        # Shared components\n├── lib/              # Utilities and helpers\n├── App.%s\n└── main.%s\n```", ext, ext)
-	} else {
-		ext := "jsx"
-		if config.Language == models.LangTypeScript {
-			ext = "tsx"
-		}
-		structureExample = fmt.Sprintf("```\nsrc/\n├── components/       # UI components\n├── pages/           # Page components\n├── services/        # API services\n├── utils/           # Utility functions\n├── App.%s\n└── main.%s\n```", ext, ext)
-	}
-
-	return fmt.Sprintf(`# %s
-
-This project was created with frontforge.
-
-## Tech Stack
-
-- **Language**: %s
-- **Framework**: %s
-- **Build Tool**: Vite
-- **Styling**: %s
-- **Routing**: %s
-- **Testing**: %s
-- **State Management**: %s
-- **Data Fetching**: %s
-
-## Getting Started
-
-### Install dependencies
-`+"```bash\n%s install\n```"+`
-
-### Run development server
-`+"```bash\n%s dev\n```"+`
-
-### Build for production
-`+"```bash\n%s build\n```"+`
-
-### Run tests
-`+"```bash\n%s test\n```"+`
-
-## Project Structure
-
-%s
-
-## Learn More
-
-- [%s Documentation](%s)
-- [Vite Documentation](https://vitejs.dev)
-`,
-		config.ProjectName,
-		config.Language,
-		config.Framework,
-		config.Styling,
-		config.Routing,
-		config.Testing,
-		config.StateManagement,
-		config.DataFetching,
-		config.PackageManager,
-		pmRun,
-		pmRun,
-		pmRun,
-		structureExample,
-		config.Framework,
-		getFrameworkDocURL(config.Framework),
-	)
-}
-
-// getFrameworkDocURL returns the correct documentation URL for each framework
-func getFrameworkDocURL(framework string) string {
-	switch framework {
-	case models.FrameworkReact:
-		return "https://react.dev"
-	case models.FrameworkVue:
-		return "https://vuejs.org"
-	case models.FrameworkAngular:
-		return "https://angular.dev"
-	case models.FrameworkSvelte:
-		return "https://svelte.dev"
-	case models.FrameworkSolid:
-		return "https://www.solidjs.com"
-	case models.FrameworkVanilla:
-		return "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
-	default:
-		return "https://vitejs.dev"
-	}
-}
-
-func generateTailwindConfig(
-	projectPath string,
-	config models.Config,
-	writeFunc func(string, string) error,
-) error {
-	// Tailwind CSS 4 uses CSS-first configuration via @import
-	// No tailwind.config.js or postcss.config.js needed
-	indexCSS := `@import "tailwindcss";
-`
-	return writeFunc(filepath.Join(projectPath, "src", "index.css"), indexCSS)
-}
-
-func generateCSSModulesExample(
-	projectPath string,
-	config models.Config,
-	writeFunc func(string, string) error,
-) error {
-	// Generate App.module.css with example styles
-	appModuleCSS := `.app {
-  text-align: center;
-  padding: 2rem;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  color: #333;
-}
-
-.button {
-  padding: 0.5rem 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.button:hover {
-  background-color: #0056b3;
-}
-`
-	return writeFunc(filepath.Join(projectPath, "src", "App.module.css"), appModuleCSS)
-}
-
-func generateSassExample(
-	projectPath string,
-	config models.Config,
-	writeFunc func(string, string) error,
-) error {
-	// Generate styles.scss with example styles and Sass features
-	stylesScss := `// Variables
-$primary-color: #007bff;
-$primary-hover: #0056b3;
-$text-color: #333;
-$spacing: 1rem;
-
-// Mixins
-@mixin button-styles {
-  padding: $spacing * 0.5 $spacing;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-// Styles
-.app {
-  text-align: center;
-  padding: $spacing * 2;
-
-  .title {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: $spacing;
-    color: $text-color;
-  }
-
-  .button {
-    @include button-styles;
-    background-color: $primary-color;
-    color: white;
-
-    &:hover {
-      background-color: $primary-hover;
-    }
-  }
-}
-`
-	return writeFunc(filepath.Join(projectPath, "src", "styles.scss"), stylesScss)
-}
-
-func generateVitestConfig(
-	projectPath string,
-	config models.Config,
-	mkdirFunc func(string) error,
-	writeFunc func(string, string) error,
-) error {
-	ext := "js"
-	if config.Language == models.LangTypeScript {
-		ext = "ts"
-	}
-
-	// Generate framework-specific plugin import and usage
-	var pluginImport, pluginUsage string
-	switch config.Framework {
-	case models.FrameworkReact:
-		pluginImport = "import react from '@vitejs/plugin-react';"
-		pluginUsage = "react()"
-	case models.FrameworkVue:
-		pluginImport = "import vue from '@vitejs/plugin-vue';"
-		pluginUsage = "vue()"
-	case models.FrameworkSvelte:
-		pluginImport = "import { svelte } from '@sveltejs/vite-plugin-svelte';"
-		pluginUsage = "svelte()"
-	default:
-		pluginImport = ""
-		pluginUsage = ""
-	}
-
-	vitestConfig := fmt.Sprintf(`import { defineConfig } from 'vitest/config';
-%s
-
-export default defineConfig({
-  plugins: [%s],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.%s',
-  },
-});
-`, pluginImport, pluginUsage, ext)
-
-	if err := writeFunc(filepath.Join(projectPath, fmt.Sprintf("vitest.config.%s", ext)), vitestConfig); err != nil {
-		return err
-	}
-
-	// Create test directory
-	testDir := filepath.Join(projectPath, "src", "test")
-	if err := mkdirFunc(testDir); err != nil {
-		return err
-	}
-
-	// Generate framework-specific test setup
-	var setupFile string
-	switch config.Framework {
-	case models.FrameworkReact:
-		setupFile = `import { expect, afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import * as matchers from '@testing-library/jest-dom/matchers';
-
-expect.extend(matchers);
-
-afterEach(() => {
-  cleanup();
-});
-`
-	case models.FrameworkVue:
-		setupFile = `import { expect } from 'vitest';
-import * as matchers from '@testing-library/jest-dom/matchers';
-
-expect.extend(matchers);
-`
-	case models.FrameworkSvelte:
-		setupFile = `import { expect, afterEach } from 'vitest';
-import { cleanup } from '@testing-library/svelte';
-import * as matchers from '@testing-library/jest-dom/matchers';
-
-expect.extend(matchers);
-
-afterEach(() => {
-  cleanup();
-});
-`
-	default:
-		// Vanilla JS/TS - minimal setup
-		setupFile = `import { expect } from 'vitest';
-import * as matchers from '@testing-library/jest-dom/matchers';
-
-expect.extend(matchers);
-`
-	}
-
-	return writeFunc(filepath.Join(testDir, fmt.Sprintf("setup.%s", ext)), setupFile)
-}
-
-func generateViteSVG() string {
-	// Simple Vite-themed SVG logo (lightning bolt in circle)
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="10" stroke="#646cff" fill="none"/>
-  <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" fill="#646cff"/>
-</svg>
-`
-}
