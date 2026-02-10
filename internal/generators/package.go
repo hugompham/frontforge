@@ -123,13 +123,36 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	// Testing
 	if config.Testing == models.TestingVitest {
 		pkg.DevDependencies["vitest"] = "^4.0.15"
-		pkg.DevDependencies["@testing-library/react"] = "^16.3.0"
 		pkg.DevDependencies["@testing-library/jest-dom"] = "^6.9.1"
 		pkg.DevDependencies["jsdom"] = "^25.0.1"
+
+		// Framework-specific testing libraries
+		switch config.Framework {
+		case models.FrameworkReact:
+			pkg.DevDependencies["@testing-library/react"] = "^16.3.0"
+		case models.FrameworkVue:
+			pkg.DevDependencies["@vue/test-utils"] = "^2.4.6"
+		case models.FrameworkSvelte:
+			pkg.DevDependencies["@testing-library/svelte"] = "^5.3.1"
+		default:
+			// Vanilla JS/TS uses @testing-library/dom
+			pkg.DevDependencies["@testing-library/dom"] = "^10.4.0"
+		}
 	} else if config.Testing == models.TestingJest {
 		pkg.DevDependencies["jest"] = "^30.2.0"
-		pkg.DevDependencies["@testing-library/react"] = "^16.3.0"
 		pkg.DevDependencies["@testing-library/jest-dom"] = "^6.9.1"
+
+		// Framework-specific testing libraries
+		switch config.Framework {
+		case models.FrameworkReact:
+			pkg.DevDependencies["@testing-library/react"] = "^16.3.0"
+		case models.FrameworkVue:
+			pkg.DevDependencies["@vue/test-utils"] = "^2.4.6"
+		case models.FrameworkSvelte:
+			pkg.DevDependencies["@testing-library/svelte"] = "^5.3.1"
+		default:
+			pkg.DevDependencies["@testing-library/dom"] = "^10.4.0"
+		}
 	}
 
 	// ESLint

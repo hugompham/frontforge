@@ -328,18 +328,35 @@ func generateVitestConfig(projectPath string, config models.Config) error {
 		ext = "ts"
 	}
 
+	// Generate framework-specific plugin import and usage
+	var pluginImport, pluginUsage string
+	switch config.Framework {
+	case models.FrameworkReact:
+		pluginImport = "import react from '@vitejs/plugin-react';"
+		pluginUsage = "react()"
+	case models.FrameworkVue:
+		pluginImport = "import vue from '@vitejs/plugin-vue';"
+		pluginUsage = "vue()"
+	case models.FrameworkSvelte:
+		pluginImport = "import { svelte } from '@sveltejs/vite-plugin-svelte';"
+		pluginUsage = "svelte()"
+	default:
+		pluginImport = ""
+		pluginUsage = ""
+	}
+
 	vitestConfig := fmt.Sprintf(`import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+%s
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [%s],
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.%s',
   },
 });
-`, ext)
+`, pluginImport, pluginUsage, ext)
 
 	if err := writeFile(filepath.Join(projectPath, fmt.Sprintf("vitest.config.%s", ext)), vitestConfig); err != nil {
 		return err
@@ -351,7 +368,11 @@ export default defineConfig({
 		return err
 	}
 
-	setupFile := fmt.Sprintf(`import { expect, afterEach } from 'vitest';
+	// Generate framework-specific test setup
+	var setupFile string
+	switch config.Framework {
+	case models.FrameworkReact:
+		setupFile = `import { expect, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
@@ -360,7 +381,33 @@ expect.extend(matchers);
 afterEach(() => {
   cleanup();
 });
-`)
+`
+	case models.FrameworkVue:
+		setupFile = `import { expect } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+expect.extend(matchers);
+`
+	case models.FrameworkSvelte:
+		setupFile = `import { expect, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/svelte';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+expect.extend(matchers);
+
+afterEach(() => {
+  cleanup();
+});
+`
+	default:
+		// Vanilla JS/TS - minimal setup
+		setupFile = `import { expect } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+expect.extend(matchers);
+`
+	}
+
 	return writeFile(filepath.Join(testDir, fmt.Sprintf("setup.%s", ext)), setupFile)
 }
 
