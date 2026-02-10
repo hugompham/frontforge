@@ -88,9 +88,8 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	// Styling
 	switch config.Styling {
 	case models.StylingTailwind:
-		pkg.DevDependencies["tailwindcss"] = "^4.1.17"
-		pkg.DevDependencies["autoprefixer"] = "^10.4.22"
-		pkg.DevDependencies["postcss"] = "^8.5.6"
+		pkg.DevDependencies["tailwindcss"] = "^4.1.18"
+		pkg.DevDependencies["@tailwindcss/vite"] = "^4.1.18"
 	case models.StylingBootstrap:
 		pkg.Dependencies["bootstrap"] = "^5.3.3"
 	case models.StylingSass:

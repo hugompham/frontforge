@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	MinNodeMajorVersion = 18
-	MinNodeMinorVersion = 0
+	MinNodeMajorVersion = 20
+	MinNodeMinorVersion = 19
 	MinNodePatchVersion = 0
 )
 
@@ -26,7 +26,7 @@ func CheckNodeJS() CheckResult {
 	if err != nil {
 		result.Passed = false
 		result.Message = "Node.js not found"
-		result.Suggestion = "Install Node.js v18.0.0 or higher from https://nodejs.org"
+		result.Suggestion = "Install Node.js v20.19.0 or higher from https://nodejs.org"
 		return result
 	}
 

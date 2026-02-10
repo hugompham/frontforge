@@ -27,6 +27,12 @@ func GenerateViteConfig(config models.Config) string {
 		plugins = append(plugins, "svelte()")
 	}
 
+	// Add Tailwind CSS 4 plugin
+	if config.Styling == models.StylingTailwind {
+		imports.WriteString("import tailwindcss from '@tailwindcss/vite'\n")
+		plugins = append(plugins, "tailwindcss()")
+	}
+
 	return fmt.Sprintf(`%s
 // https://vitejs.dev/config/
 export default defineConfig({

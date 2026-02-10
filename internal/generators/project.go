@@ -315,36 +315,9 @@ This project was created with frontforge.
 }
 
 func generateTailwindConfig(projectPath string, config models.Config) error {
-	tailwindConfig := `/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-`
-	if err := writeFile(filepath.Join(projectPath, "tailwind.config.js"), tailwindConfig); err != nil {
-		return err
-	}
-
-	postcssConfig := `export default {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-`
-	if err := writeFile(filepath.Join(projectPath, "postcss.config.js"), postcssConfig); err != nil {
-		return err
-	}
-
-	indexCSS := `@tailwind base;
-@tailwind components;
-@tailwind utilities;
+	// Tailwind CSS 4 uses CSS-first configuration via @import
+	// No tailwind.config.js or postcss.config.js needed
+	indexCSS := `@import "tailwindcss";
 `
 	return writeFile(filepath.Join(projectPath, "src", "index.css"), indexCSS)
 }

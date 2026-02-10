@@ -51,7 +51,7 @@ func GenerateMainFile(config models.Config) string {
 
 		// Add routing wrapper
 		if config.Routing == models.RoutingReactRouter {
-			imports.WriteString("\nimport { BrowserRouter } from 'react-router-dom'")
+			imports.WriteString("\nimport { BrowserRouter } from 'react-router'")
 			appWrapper = `<BrowserRouter>
       <App />
     </BrowserRouter>`
@@ -129,7 +129,7 @@ func GenerateAppFile(config models.Config) string {
 		imports.WriteString("import { useState } from 'react'")
 
 		if config.Routing == models.RoutingReactRouter {
-			imports.WriteString("\nimport { Routes, Route, Link } from 'react-router-dom'")
+			imports.WriteString("\nimport { Routes, Route, Link } from 'react-router'")
 		}
 
 		stateExample := ""
