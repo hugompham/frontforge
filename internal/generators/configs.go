@@ -25,6 +25,9 @@ func GenerateViteConfig(config models.Config) string {
 	case models.FrameworkSvelte:
 		imports.WriteString("import { svelte } from '@sveltejs/vite-plugin-svelte'\n")
 		plugins = append(plugins, "svelte()")
+	case models.FrameworkSolid:
+		imports.WriteString("import solid from 'vite-plugin-solid'\n")
+		plugins = append(plugins, "solid()")
 	}
 
 	// Add Tailwind CSS 4 plugin
@@ -67,25 +70,32 @@ func GenerateTSConfig(config models.Config) TSConfigSet {
 		jsx = "react-jsx"
 	}
 
+	compilerOptions := map[string]interface{}{
+		"target":                     "ES2020",
+		"useDefineForClassFields":    true,
+		"lib":                        []string{"ES2020", "DOM", "DOM.Iterable"},
+		"module":                     "ESNext",
+		"skipLibCheck":               true,
+		"moduleResolution":           "bundler",
+		"allowImportingTsExtensions": true,
+		"isolatedModules":            true,
+		"moduleDetection":            "force",
+		"noEmit":                     true,
+		"jsx":                        jsx,
+		"strict":                     true,
+		"noUnusedLocals":             true,
+		"noUnusedParameters":         true,
+		"noFallthroughCasesInSwitch": true,
+	}
+
+	// Add Solid-specific JSX import source
+	if config.Framework == models.FrameworkSolid {
+		compilerOptions["jsxImportSource"] = "solid-js"
+	}
+
 	app := map[string]interface{}{
-		"compilerOptions": map[string]interface{}{
-			"target":                     "ES2020",
-			"useDefineForClassFields":    true,
-			"lib":                        []string{"ES2020", "DOM", "DOM.Iterable"},
-			"module":                     "ESNext",
-			"skipLibCheck":               true,
-			"moduleResolution":           "bundler",
-			"allowImportingTsExtensions": true,
-			"isolatedModules":            true,
-			"moduleDetection":            "force",
-			"noEmit":                     true,
-			"jsx":                        jsx,
-			"strict":                     true,
-			"noUnusedLocals":             true,
-			"noUnusedParameters":         true,
-			"noFallthroughCasesInSwitch": true,
-		},
-		"include": []string{"src"},
+		"compilerOptions": compilerOptions,
+		"include":         []string{"src"},
 	}
 
 	node := map[string]interface{}{

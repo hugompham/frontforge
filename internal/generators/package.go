@@ -60,10 +60,13 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	case models.FrameworkSvelte:
 		pkg.Dependencies["svelte"] = "^5.30.0"
 		pkg.DevDependencies["@sveltejs/vite-plugin-svelte"] = "^6.2.1"
+	case models.FrameworkSolid:
+		pkg.Dependencies["solid-js"] = "^1.9.11"
+		pkg.DevDependencies["vite-plugin-solid"] = "^2.11.10"
 	}
 
 	// Vite
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte {
+	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkSolid {
 		pkg.DevDependencies["vite"] = "^7.2.7"
 	}
 
