@@ -3,9 +3,9 @@ package generators
 import (
 	"fmt"
 	"frontforge/internal/errors"
+	"frontforge/internal/preflight"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // NormalizePath converts a user-provided path to an absolute, clean path
@@ -38,7 +38,7 @@ func NormalizePath(userPath, cwd string) (string, error) {
 	}
 
 	// Validate the path is safe (not in system directories)
-	if err := validatePathSafety(absPath); err != nil {
+	if err := preflight.ValidatePathSafety(absPath); err != nil {
 		return "", err
 	}
 
@@ -49,7 +49,7 @@ func NormalizePath(userPath, cwd string) (string, error) {
 // Returns an error if the path is unsafe or already contains files
 func ValidateProjectPath(absPath string) error {
 	// Check if path is safe
-	if err := validatePathSafety(absPath); err != nil {
+	if err := preflight.ValidatePathSafety(absPath); err != nil {
 		return err
 	}
 
@@ -86,57 +86,7 @@ func ValidateProjectPath(absPath string) error {
 // IsPathSafe checks if a path is safe for project creation
 // Returns true if the path is safe, false if it's in a system directory
 func IsPathSafe(absPath string) bool {
-	return validatePathSafety(absPath) == nil
-}
-
-// validatePathSafety ensures the path is not in a dangerous location
-func validatePathSafety(absPath string) error {
-	// Normalize path for comparison
-	normalizedPath := filepath.Clean(absPath)
-
-	// Allow paths in system temporary directory (e.g., /var/folders on macOS)
-	tempDir := filepath.Clean(os.TempDir())
-	if strings.HasPrefix(normalizedPath, tempDir+string(filepath.Separator)) ||
-		normalizedPath == tempDir {
-		return nil
-	}
-
-	// List of forbidden paths (system directories)
-	forbiddenPaths := []string{
-		"/",
-		"/bin",
-		"/boot",
-		"/dev",
-		"/etc",
-		"/lib",
-		"/lib64",
-		"/proc",
-		"/root",
-		"/sbin",
-		"/sys",
-		"/usr",
-		"/var",
-		"/System",           // macOS
-		"/Library",          // macOS
-		"/Applications",     // macOS
-		"C:\\Windows",       // Windows
-		"C:\\Program Files", // Windows
-	}
-
-	// Check if path starts with any forbidden path
-	for _, forbidden := range forbiddenPaths {
-		// Normalize forbidden path for comparison
-		normalizedForbidden := filepath.Clean(forbidden)
-
-		// Check if the path is exactly the forbidden path or a subdirectory
-		if normalizedPath == normalizedForbidden ||
-			strings.HasPrefix(normalizedPath, normalizedForbidden+string(filepath.Separator)) {
-			return errors.NewPathError(absPath,
-				fmt.Sprintf("cannot create project in system directory: %s", forbidden), nil)
-		}
-	}
-
-	return nil
+	return preflight.ValidatePathSafety(absPath) == nil
 }
 
 // GetProjectName extracts the project name from a path

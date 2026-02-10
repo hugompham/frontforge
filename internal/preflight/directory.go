@@ -34,7 +34,7 @@ func CheckDirectoryConflicts(projectPath string) CheckResult {
 	}
 
 	// Validate path safety - prevent system directory usage
-	if err := validatePathSafety(absPath); err != nil {
+	if err := ValidatePathSafety(absPath); err != nil {
 		result.Passed = false
 		result.Message = err.Error()
 		result.Suggestion = "Choose a path in your home or project directory"
@@ -95,7 +95,8 @@ func CheckDirectoryConflicts(projectPath string) CheckResult {
 }
 
 // validatePathSafety ensures the path is not in a dangerous system location
-func validatePathSafety(absPath string) error {
+// ValidatePathSafety checks if a path is safe for project creation
+func ValidatePathSafety(absPath string) error {
 	normalizedPath := filepath.Clean(absPath)
 
 	// Allow paths in system temporary directory
