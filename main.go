@@ -424,6 +424,7 @@ func adjustFrameworkDefaults(config *models.Config) {
 		config.StateManagement = models.StatePinia
 		config.UILibrary = models.UILibraryVuetify
 		config.FormManagement = models.FormVeeValidate
+		config.DataFetching = models.DataAxios
 		config.Icons = models.IconsVueIcons
 		config.I18n = models.I18nVueI18n
 		config.Animation = models.AnimationAutoAnimate
@@ -432,6 +433,7 @@ func adjustFrameworkDefaults(config *models.Config) {
 		config.StateManagement = models.StateNgRx
 		config.UILibrary = models.UILibraryAngularMaterial
 		config.FormManagement = models.FormNone
+		config.DataFetching = models.DataFetchAPI
 		config.Animation = models.AnimationNone
 		config.Icons = models.IconsNone
 		config.I18n = models.I18nNone
@@ -440,6 +442,7 @@ func adjustFrameworkDefaults(config *models.Config) {
 		config.StateManagement = models.StateSvelteStores
 		config.UILibrary = models.UILibraryNone
 		config.FormManagement = models.FormNone
+		config.DataFetching = models.DataFetchAPI
 		config.Animation = models.AnimationAutoAnimate
 		config.Icons = models.IconsLucide
 		config.I18n = models.I18nNone
@@ -448,6 +451,7 @@ func adjustFrameworkDefaults(config *models.Config) {
 		config.StateManagement = models.StateSolidStores
 		config.UILibrary = models.UILibraryNone
 		config.FormManagement = models.FormNone
+		config.DataFetching = models.DataFetchAPI
 		config.Animation = models.AnimationFramerMotion
 		config.Icons = models.IconsLucide
 		config.I18n = models.I18nNone
@@ -456,9 +460,9 @@ func adjustFrameworkDefaults(config *models.Config) {
 		config.StateManagement = models.StateNone
 		config.UILibrary = models.UILibraryNone
 		config.FormManagement = models.FormNone
+		config.DataFetching = models.DataFetchAPI
 		config.Animation = models.AnimationNone
 		config.Icons = models.IconsNone
-		config.DataFetching = models.DataFetchAPI
 		config.I18n = models.I18nNone
 	}
 }
