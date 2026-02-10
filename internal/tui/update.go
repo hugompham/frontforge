@@ -22,10 +22,15 @@ type errorMsg struct{ err error }
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Global key handlers
+		// Global key handlers (except during critical states)
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c":
 			return m, tea.Quit
+		case "q":
+			// Prevent accidental quit during preflight checks or generation
+			if m.currentState != StatePreflightChecks && m.currentState != StateForging {
+				return m, tea.Quit
+			}
 		}
 
 		// State-specific key handlers
