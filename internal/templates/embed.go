@@ -8,7 +8,7 @@ import (
 	"text/template"
 )
 
-//go:embed static/*
+//go:embed static/* config/*
 var templateFS embed.FS
 
 // TemplateData holds all data for template rendering, including computed fields
@@ -122,4 +122,21 @@ func RenderStatic(filePath string) (string, error) {
 		return "", fmt.Errorf("failed to read static file %s: %w", filePath, err)
 	}
 	return string(content), nil
+}
+
+// RenderESLintConfig renders the appropriate ESLint config based on framework
+func RenderESLintConfig(config models.Config) (string, error) {
+	var templatePath string
+
+	switch config.Framework {
+	case models.FrameworkReact:
+		templatePath = "config/eslint-react.tmpl"
+	case models.FrameworkVue:
+		templatePath = "config/eslint-vue.tmpl"
+	default:
+		// Svelte, Solid, Vanilla, Angular - use default config
+		templatePath = "config/eslint-default.tmpl"
+	}
+
+	return RenderStatic(templatePath)
 }
