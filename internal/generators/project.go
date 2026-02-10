@@ -330,5 +330,3 @@ func writeJSON(path string, data interface{}) error {
 	}
 	return os.WriteFile(path, bytes, 0644)
 }
-
-
