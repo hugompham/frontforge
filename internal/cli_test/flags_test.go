@@ -8,7 +8,7 @@ import (
 // TestFlagMapping tests that CLI flags map correctly to config
 func TestFlagMapping(t *testing.T) {
 	tests := []struct {
-		name         string
+		name          string
 		flagFramework string
 		flagLang      string
 		flagPM        string
@@ -103,10 +103,10 @@ func TestQuickPreset(t *testing.T) {
 // TestInvalidFlagValues tests handling of invalid flag values
 func TestInvalidFlagValues(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
+		name       string
+		input      string
 		normalizer func(string) string
-		wantEmpty bool
+		wantEmpty  bool
 	}{
 		{
 			name:       "Invalid framework",
