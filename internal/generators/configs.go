@@ -3,7 +3,6 @@ package generators
 import (
 	"fmt"
 	"frontforge/internal/models"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -134,7 +133,12 @@ func GenerateTSConfig(config models.Config) TSConfigSet {
 }
 
 // GenerateProjectStructure creates the directory structure
-func GenerateProjectStructure(projectPath string, config models.Config) error {
+func GenerateProjectStructure(
+	projectPath string,
+	config models.Config,
+	mkdirFunc func(string) error,
+	writeFunc func(string, string) error,
+) error {
 	// Create base directories
 	dirs := []string{
 		filepath.Join(projectPath, "src"),
@@ -154,7 +158,7 @@ func GenerateProjectStructure(projectPath string, config models.Config) error {
 
 		// Create all directories
 		for _, dir := range dirs {
-			if err := os.MkdirAll(dir, 0755); err != nil {
+			if err := mkdirFunc(dir); err != nil {
 				return err
 			}
 		}
@@ -184,7 +188,7 @@ features/
     └── services/
 ` + "```" + `
 `
-		if err := writeFile(filepath.Join(projectPath, "src", "features", "README.md"), featureReadme); err != nil {
+		if err := writeFunc(filepath.Join(projectPath, "src", "features", "README.md"), featureReadme); err != nil {
 			return err
 		}
 	} else {
@@ -201,7 +205,7 @@ features/
 
 		// Create all directories
 		for _, dir := range dirs {
-			if err := os.MkdirAll(dir, 0755); err != nil {
+			if err := mkdirFunc(dir); err != nil {
 				return err
 			}
 		}
@@ -223,5 +227,5 @@ features/
 }
 `, typeAnnotation)
 
-	return writeFile(filepath.Join(projectPath, "src", "lib", fmt.Sprintf("utils.%s", ext)), utilsFile)
+	return writeFunc(filepath.Join(projectPath, "src", "lib", fmt.Sprintf("utils.%s", ext)), utilsFile)
 }

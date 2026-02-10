@@ -4,6 +4,7 @@ import (
 	"frontforge/internal/generators"
 	"frontforge/internal/models"
 	"frontforge/internal/testutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -219,7 +220,15 @@ func TestGenerateProjectStructure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tempDir := testutil.TempDir(t)
 
-			err := generators.GenerateProjectStructure(tempDir, tt.config)
+			// Helper functions for actual file operations in tests
+			mkdirFunc := func(path string) error {
+				return os.MkdirAll(path, 0755)
+			}
+			writeFunc := func(path, content string) error {
+				return os.WriteFile(path, []byte(content), 0644)
+			}
+
+			err := generators.GenerateProjectStructure(tempDir, tt.config, mkdirFunc, writeFunc)
 			testutil.AssertNoError(t, err)
 
 			// Verify directories exist
@@ -267,7 +276,15 @@ func TestGenerateProjectStructure_UtilsFunction(t *testing.T) {
 				Structure: models.StructureLayerBased,
 			}
 
-			err := generators.GenerateProjectStructure(tempDir, config)
+			// Helper functions for actual file operations in tests
+			mkdirFunc := func(path string) error {
+				return os.MkdirAll(path, 0755)
+			}
+			writeFunc := func(path, content string) error {
+				return os.WriteFile(path, []byte(content), 0644)
+			}
+
+			err := generators.GenerateProjectStructure(tempDir, config, mkdirFunc, writeFunc)
 			testutil.AssertNoError(t, err)
 
 			utilsPath := filepath.Join(tempDir, tt.wantFile)

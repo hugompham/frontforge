@@ -24,6 +24,7 @@ import (
 
 // SetupProject orchestrates the entire project generation
 // On error, automatically cleans up any partially created files
+// If config.DryRun is true, prints a manifest without writing files
 func SetupProject(config models.Config) error {
 	// Use the project path from config (set by CLI flags)
 	projectPath := config.ProjectPath
@@ -34,6 +35,13 @@ func SetupProject(config models.Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
+	}
+
+	// Dry-run mode: collect manifest instead of writing files
+	var manifest *DryRunManifest
+	if config.DryRun {
+		manifest = NewDryRunManifest(projectPath, config.ProjectName)
+		defer manifest.Print()
 	}
 
 	// Track all created paths for cleanup on failure
@@ -49,7 +57,7 @@ func SetupProject(config models.Config) error {
 
 	// Defer cleanup if generation fails
 	defer func() {
-		if !success {
+		if !success && !config.DryRun {
 			cleanup()
 		}
 	}()
@@ -57,27 +65,61 @@ func SetupProject(config models.Config) error {
 	// Create the project directory if it doesn't exist (for new folder mode)
 	// This will do nothing if the directory already exists (current directory mode)
 	dirExisted := false
-	if _, err := os.Stat(projectPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(projectPath, 0755); err != nil {
-			return fmt.Errorf("failed to create project directory: %w", err)
+	if !config.DryRun {
+		if _, err := os.Stat(projectPath); os.IsNotExist(err) {
+			if err := os.MkdirAll(projectPath, 0755); err != nil {
+				return fmt.Errorf("failed to create project directory: %w", err)
+			}
+			createdPaths = append(createdPaths, projectPath)
+		} else {
+			dirExisted = true
 		}
-		createdPaths = append(createdPaths, projectPath)
-	} else {
-		dirExisted = true
 	}
 
 	// Helper to track file creation
 	trackPath := func(path string) {
 		// Only track if directory didn't exist before (avoid deleting user's directory)
-		if !dirExisted {
+		if !dirExisted && !config.DryRun {
 			createdPaths = append(createdPaths, path)
 		}
+	}
+
+	// Helper to write or collect files
+	writeOrCollect := func(path, content string) error {
+		if manifest != nil {
+			manifest.AddFile(path, content)
+			return nil
+		}
+		return writeFile(path, content)
+	}
+
+	// Helper to write or collect JSON
+	writeOrCollectJSON := func(path string, data interface{}) error {
+		bytes, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			return err
+		}
+		content := string(bytes)
+		if manifest != nil {
+			manifest.AddFile(path, content)
+			return nil
+		}
+		return writeJSON(path, data)
+	}
+
+	// Helper to create or collect directories
+	mkdirOrCollect := func(path string) error {
+		if manifest != nil {
+			manifest.AddDir(path)
+			return nil
+		}
+		return os.MkdirAll(path, 0755)
 	}
 
 	// Generate package.json
 	packageJSON := GeneratePackageJSON(config)
 	packageJSONPath := filepath.Join(projectPath, "package.json")
-	if err := writeJSON(packageJSONPath, packageJSON); err != nil {
+	if err := writeOrCollectJSON(packageJSONPath, packageJSON); err != nil {
 		return fmt.Errorf("failed to write package.json: %w", err)
 	}
 	trackPath(packageJSONPath)
@@ -89,7 +131,7 @@ func SetupProject(config models.Config) error {
 		if config.Language == models.LangTypeScript {
 			ext = "ts"
 		}
-		if err := writeFile(filepath.Join(projectPath, fmt.Sprintf("vite.config.%s", ext)), viteConfig); err != nil {
+		if err := writeOrCollect(filepath.Join(projectPath, fmt.Sprintf("vite.config.%s", ext)), viteConfig); err != nil {
 			return fmt.Errorf("failed to write vite.config: %w", err)
 		}
 	}
@@ -97,31 +139,31 @@ func SetupProject(config models.Config) error {
 	// Generate TypeScript configs
 	if config.Language == models.LangTypeScript {
 		tsConfigs := GenerateTSConfig(config)
-		if err := writeJSON(filepath.Join(projectPath, "tsconfig.json"), tsConfigs.Base); err != nil {
+		if err := writeOrCollectJSON(filepath.Join(projectPath, "tsconfig.json"), tsConfigs.Base); err != nil {
 			return fmt.Errorf("failed to write tsconfig.json: %w", err)
 		}
-		if err := writeJSON(filepath.Join(projectPath, "tsconfig.app.json"), tsConfigs.App); err != nil {
+		if err := writeOrCollectJSON(filepath.Join(projectPath, "tsconfig.app.json"), tsConfigs.App); err != nil {
 			return fmt.Errorf("failed to write tsconfig.app.json: %w", err)
 		}
-		if err := writeJSON(filepath.Join(projectPath, "tsconfig.node.json"), tsConfigs.Node); err != nil {
+		if err := writeOrCollectJSON(filepath.Join(projectPath, "tsconfig.node.json"), tsConfigs.Node); err != nil {
 			return fmt.Errorf("failed to write tsconfig.node.json: %w", err)
 		}
 	}
 
 	// Generate project structure
-	if err := GenerateProjectStructure(projectPath, config); err != nil {
+	if err := GenerateProjectStructure(projectPath, config, mkdirOrCollect, writeOrCollect); err != nil {
 		return fmt.Errorf("failed to generate project structure: %w", err)
 	}
 
 	// Generate index.html
 	indexHTML := GenerateIndexHTML(config)
-	if err := writeFile(filepath.Join(projectPath, "index.html"), indexHTML); err != nil {
+	if err := writeOrCollect(filepath.Join(projectPath, "index.html"), indexHTML); err != nil {
 		return fmt.Errorf("failed to write index.html: %w", err)
 	}
 
 	// Generate vite.svg favicon
 	viteSVG := generateViteSVG()
-	if err := writeFile(filepath.Join(projectPath, "public", "vite.svg"), viteSVG); err != nil {
+	if err := writeOrCollect(filepath.Join(projectPath, "public", "vite.svg"), viteSVG); err != nil {
 		return fmt.Errorf("failed to write vite.svg: %w", err)
 	}
 
@@ -137,7 +179,7 @@ func SetupProject(config models.Config) error {
 		ext = "ts"
 	}
 
-	if err := writeFile(filepath.Join(projectPath, "src", fmt.Sprintf("main.%s", ext)), mainFile); err != nil {
+	if err := writeOrCollect(filepath.Join(projectPath, "src", fmt.Sprintf("main.%s", ext)), mainFile); err != nil {
 		return fmt.Errorf("failed to write main file: %w", err)
 	}
 
@@ -150,57 +192,57 @@ func SetupProject(config models.Config) error {
 		if err := os.MkdirAll(filepath.Join(projectPath, "src", "app"), 0755); err != nil {
 			return fmt.Errorf("failed to create app directory: %w", err)
 		}
-		if err := writeFile(filepath.Join(projectPath, "src", "app", "app.component.ts"), appFile); err != nil {
+		if err := writeOrCollect(filepath.Join(projectPath, "src", "app", "app.component.ts"), appFile); err != nil {
 			return fmt.Errorf("failed to write App component: %w", err)
 		}
 	} else {
-		if err := writeFile(filepath.Join(projectPath, "src", fmt.Sprintf("App.%s", ext)), appFile); err != nil {
+		if err := writeOrCollect(filepath.Join(projectPath, "src", fmt.Sprintf("App.%s", ext)), appFile); err != nil {
 			return fmt.Errorf("failed to write App file: %w", err)
 		}
 	}
 
 	// Generate .gitignore
 	gitignore := generateGitignore()
-	if err := writeFile(filepath.Join(projectPath, ".gitignore"), gitignore); err != nil {
+	if err := writeOrCollect(filepath.Join(projectPath, ".gitignore"), gitignore); err != nil {
 		return fmt.Errorf("failed to write .gitignore: %w", err)
 	}
 
 	// Generate README
 	readme := generateREADME(config)
-	if err := writeFile(filepath.Join(projectPath, "README.md"), readme); err != nil {
+	if err := writeOrCollect(filepath.Join(projectPath, "README.md"), readme); err != nil {
 		return fmt.Errorf("failed to write README.md: %w", err)
 	}
 
 	// Generate Tailwind config if needed
 	if config.Styling == models.StylingTailwind {
-		if err := generateTailwindConfig(projectPath, config); err != nil {
+		if err := generateTailwindConfig(projectPath, config, writeOrCollect); err != nil {
 			return fmt.Errorf("failed to generate Tailwind config: %w", err)
 		}
 	}
 
 	// Generate CSS Modules example if needed
 	if config.Styling == models.StylingCSSModules {
-		if err := generateCSSModulesExample(projectPath, config); err != nil {
+		if err := generateCSSModulesExample(projectPath, config, writeOrCollect); err != nil {
 			return fmt.Errorf("failed to generate CSS Modules example: %w", err)
 		}
 	}
 
 	// Generate Sass example if needed
 	if config.Styling == models.StylingSass {
-		if err := generateSassExample(projectPath, config); err != nil {
+		if err := generateSassExample(projectPath, config, writeOrCollect); err != nil {
 			return fmt.Errorf("failed to generate Sass example: %w", err)
 		}
 	}
 
 	// Generate Vitest config if needed
 	if config.Testing == models.TestingVitest {
-		if err := generateVitestConfig(projectPath, config); err != nil {
+		if err := generateVitestConfig(projectPath, config, mkdirOrCollect, writeOrCollect); err != nil {
 			return fmt.Errorf("failed to generate Vitest config: %w", err)
 		}
 	}
 
 	// Generate ESLint config
-	if err := generateESLintConfig(projectPath, config); err != nil {
+	if err := generateESLintConfig(projectPath, config, writeOrCollect); err != nil {
 		return fmt.Errorf("failed to generate ESLint config: %w", err)
 	}
 
@@ -347,15 +389,23 @@ func getFrameworkDocURL(framework string) string {
 	}
 }
 
-func generateTailwindConfig(projectPath string, config models.Config) error {
+func generateTailwindConfig(
+	projectPath string,
+	config models.Config,
+	writeFunc func(string, string) error,
+) error {
 	// Tailwind CSS 4 uses CSS-first configuration via @import
 	// No tailwind.config.js or postcss.config.js needed
 	indexCSS := `@import "tailwindcss";
 `
-	return writeFile(filepath.Join(projectPath, "src", "index.css"), indexCSS)
+	return writeFunc(filepath.Join(projectPath, "src", "index.css"), indexCSS)
 }
 
-func generateCSSModulesExample(projectPath string, config models.Config) error {
+func generateCSSModulesExample(
+	projectPath string,
+	config models.Config,
+	writeFunc func(string, string) error,
+) error {
 	// Generate App.module.css with example styles
 	appModuleCSS := `.app {
   text-align: center;
@@ -382,10 +432,14 @@ func generateCSSModulesExample(projectPath string, config models.Config) error {
   background-color: #0056b3;
 }
 `
-	return writeFile(filepath.Join(projectPath, "src", "App.module.css"), appModuleCSS)
+	return writeFunc(filepath.Join(projectPath, "src", "App.module.css"), appModuleCSS)
 }
 
-func generateSassExample(projectPath string, config models.Config) error {
+func generateSassExample(
+	projectPath string,
+	config models.Config,
+	writeFunc func(string, string) error,
+) error {
 	// Generate styles.scss with example styles and Sass features
 	stylesScss := `// Variables
 $primary-color: #007bff;
@@ -425,10 +479,15 @@ $spacing: 1rem;
   }
 }
 `
-	return writeFile(filepath.Join(projectPath, "src", "styles.scss"), stylesScss)
+	return writeFunc(filepath.Join(projectPath, "src", "styles.scss"), stylesScss)
 }
 
-func generateVitestConfig(projectPath string, config models.Config) error {
+func generateVitestConfig(
+	projectPath string,
+	config models.Config,
+	mkdirFunc func(string) error,
+	writeFunc func(string, string) error,
+) error {
 	ext := "js"
 	if config.Language == models.LangTypeScript {
 		ext = "ts"
@@ -464,13 +523,13 @@ export default defineConfig({
 });
 `, pluginImport, pluginUsage, ext)
 
-	if err := writeFile(filepath.Join(projectPath, fmt.Sprintf("vitest.config.%s", ext)), vitestConfig); err != nil {
+	if err := writeFunc(filepath.Join(projectPath, fmt.Sprintf("vitest.config.%s", ext)), vitestConfig); err != nil {
 		return err
 	}
 
 	// Create test directory
 	testDir := filepath.Join(projectPath, "src", "test")
-	if err := os.MkdirAll(testDir, 0755); err != nil {
+	if err := mkdirFunc(testDir); err != nil {
 		return err
 	}
 
@@ -514,10 +573,14 @@ expect.extend(matchers);
 `
 	}
 
-	return writeFile(filepath.Join(testDir, fmt.Sprintf("setup.%s", ext)), setupFile)
+	return writeFunc(filepath.Join(testDir, fmt.Sprintf("setup.%s", ext)), setupFile)
 }
 
-func generateESLintConfig(projectPath string, config models.Config) error {
+func generateESLintConfig(
+	projectPath string,
+	config models.Config,
+	writeFunc func(string, string) error,
+) error {
 	var eslintConfig string
 
 	switch config.Framework {
@@ -593,7 +656,7 @@ export default tseslint.config(
 `
 	}
 
-	return writeFile(filepath.Join(projectPath, "eslint.config.js"), eslintConfig)
+	return writeFunc(filepath.Join(projectPath, "eslint.config.js"), eslintConfig)
 }
 
 func generateViteSVG() string {

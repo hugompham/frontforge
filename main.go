@@ -19,6 +19,7 @@ func main() {
 	var projectPath string
 	var showHelp bool
 	var quickMode bool
+	var dryRun bool
 	var projectName string
 	var framework string
 	var language string
@@ -31,6 +32,7 @@ func main() {
 
 	// Non-interactive flags
 	flag.BoolVar(&quickMode, "quick", false, "Use quick preset (React + TypeScript + Tailwind) and skip interactive mode")
+	flag.BoolVar(&dryRun, "dry-run", false, "Preview mode: show what files would be generated without writing them")
 	flag.StringVar(&projectName, "name", "", "Project name (required for non-interactive mode)")
 	flag.StringVar(&framework, "framework", "", "Framework: react, vue, angular, svelte, solid, vanilla")
 	flag.StringVar(&language, "lang", "", "Language: ts, js")
@@ -47,7 +49,7 @@ func main() {
 
 	// Check if running in non-interactive mode
 	if quickMode || projectName != "" {
-		runNonInteractive(projectPath, projectName, quickMode, framework, language, packageManager, styling)
+		runNonInteractive(projectPath, projectName, quickMode, dryRun, framework, language, packageManager, styling)
 		return
 	}
 
@@ -95,7 +97,7 @@ func main() {
 }
 
 // runNonInteractive generates a project without the interactive TUI
-func runNonInteractive(projectPath, projectName string, quickMode bool, framework, language, packageManager, styling string) {
+func runNonInteractive(projectPath, projectName string, quickMode, dryRun bool, framework, language, packageManager, styling string) {
 	// Validate project name is provided
 	if projectName == "" {
 		fmt.Println("Error: -name flag is required for non-interactive mode")
@@ -112,6 +114,7 @@ func runNonInteractive(projectPath, projectName string, quickMode bool, framewor
 	// Start with quick preset as base
 	config := models.QuickPreset()
 	config.ProjectName = projectName
+	config.DryRun = dryRun
 
 	// Apply overrides if provided
 	if framework != "" {

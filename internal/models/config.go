@@ -30,6 +30,7 @@ type Config struct {
 	Utilities       string
 	I18n            string
 	Structure       string
+	DryRun          bool // Preview mode - show what would be generated without writing files
 }
 
 // SetupMode defines quick or custom setup
