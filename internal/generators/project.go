@@ -313,7 +313,7 @@ This project was created with frontforge.
 
 ## Learn More
 
-- [%s Documentation](https://%s.dev)
+- [%s Documentation](%s)
 - [Vite Documentation](https://vitejs.dev)
 `,
 		config.ProjectName,
@@ -330,8 +330,28 @@ This project was created with frontforge.
 		pmRun,
 		structureExample,
 		config.Framework,
-		config.Framework,
+		getFrameworkDocURL(config.Framework),
 	)
+}
+
+// getFrameworkDocURL returns the correct documentation URL for each framework
+func getFrameworkDocURL(framework string) string {
+	switch framework {
+	case models.FrameworkReact:
+		return "https://react.dev"
+	case models.FrameworkVue:
+		return "https://vuejs.org"
+	case models.FrameworkAngular:
+		return "https://angular.dev"
+	case models.FrameworkSvelte:
+		return "https://svelte.dev"
+	case models.FrameworkSolid:
+		return "https://www.solidjs.com"
+	case models.FrameworkVanilla:
+		return "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
+	default:
+		return "https://vitejs.dev"
+	}
 }
 
 func generateTailwindConfig(projectPath string, config models.Config) error {
