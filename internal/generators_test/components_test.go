@@ -32,7 +32,7 @@ func TestGenerateIndexHTML(t *testing.T) {
 				Language:    models.LangTypeScript,
 			},
 			wantMountID:   "app",
-			wantScriptExt: "tsx",
+			wantScriptExt: "ts",
 		},
 		{
 			name: "Svelte TypeScript",
@@ -42,7 +42,7 @@ func TestGenerateIndexHTML(t *testing.T) {
 				Language:    models.LangTypeScript,
 			},
 			wantMountID:   "root",
-			wantScriptExt: "tsx",
+			wantScriptExt: "ts",
 		},
 		{
 			name: "Solid TypeScript",
