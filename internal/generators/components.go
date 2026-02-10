@@ -117,6 +117,8 @@ createRoot(%s).render(
 			imports.WriteString("\nimport './index.css'")
 		} else if config.Styling == models.StylingBootstrap {
 			imports.WriteString("\nimport 'bootstrap/dist/css/bootstrap.min.css'")
+		} else if config.Styling == models.StylingSass {
+			imports.WriteString("\nimport './styles.scss'")
 		}
 
 		appCode := "const app = createApp(App)"
@@ -155,6 +157,13 @@ func GenerateAppFile(config models.Config) string {
 	if config.Framework == models.FrameworkReact {
 		var imports strings.Builder
 		imports.WriteString("import { useState } from 'react'")
+
+		// Add styling imports
+		if config.Styling == models.StylingCSSModules {
+			imports.WriteString("\nimport styles from './App.module.css'")
+		} else if config.Styling == models.StylingSass {
+			imports.WriteString("\nimport './styles.scss'")
+		}
 
 		if config.Routing == models.RoutingReactRouter {
 			imports.WriteString("\nimport { Routes, Route, Link } from 'react-router'")
@@ -328,6 +337,10 @@ export default App
 func getContainerClass(config models.Config) string {
 	if config.Styling == models.StylingTailwind {
 		return "min-h-screen flex items-center justify-center bg-gray-100"
+	} else if config.Styling == models.StylingCSSModules {
+		return "styles.app"
+	} else if config.Styling == models.StylingSass {
+		return "app"
 	}
 	return "app"
 }
@@ -342,6 +355,10 @@ func getCenterClass(config models.Config) string {
 func getTitleClass(config models.Config) string {
 	if config.Styling == models.StylingTailwind {
 		return "text-4xl font-bold mb-4"
+	} else if config.Styling == models.StylingCSSModules {
+		return "styles.title"
+	} else if config.Styling == models.StylingSass {
+		return "title"
 	}
 	return ""
 }
@@ -356,6 +373,10 @@ func getSpaceClass(config models.Config) string {
 func getTailwindButtonClass(config models.Config, color string) string {
 	if config.Styling == models.StylingTailwind {
 		return fmt.Sprintf("px-4 py-2 bg-%s-500 text-white rounded hover:bg-%s-600", color, color)
+	} else if config.Styling == models.StylingCSSModules {
+		return "styles.button"
+	} else if config.Styling == models.StylingSass {
+		return "button"
 	}
 	return ""
 }

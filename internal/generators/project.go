@@ -154,6 +154,20 @@ func SetupProject(config models.Config) error {
 		}
 	}
 
+	// Generate CSS Modules example if needed
+	if config.Styling == models.StylingCSSModules {
+		if err := generateCSSModulesExample(projectPath, config); err != nil {
+			return fmt.Errorf("failed to generate CSS Modules example: %w", err)
+		}
+	}
+
+	// Generate Sass example if needed
+	if config.Styling == models.StylingSass {
+		if err := generateSassExample(projectPath, config); err != nil {
+			return fmt.Errorf("failed to generate Sass example: %w", err)
+		}
+	}
+
 	// Generate Vitest config if needed
 	if config.Testing == models.TestingVitest {
 		if err := generateVitestConfig(projectPath, config); err != nil {
@@ -320,6 +334,79 @@ func generateTailwindConfig(projectPath string, config models.Config) error {
 	indexCSS := `@import "tailwindcss";
 `
 	return writeFile(filepath.Join(projectPath, "src", "index.css"), indexCSS)
+}
+
+func generateCSSModulesExample(projectPath string, config models.Config) error {
+	// Generate App.module.css with example styles
+	appModuleCSS := `.app {
+  text-align: center;
+  padding: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+`
+	return writeFile(filepath.Join(projectPath, "src", "App.module.css"), appModuleCSS)
+}
+
+func generateSassExample(projectPath string, config models.Config) error {
+	// Generate styles.scss with example styles and Sass features
+	stylesScss := `// Variables
+$primary-color: #007bff;
+$primary-hover: #0056b3;
+$text-color: #333;
+$spacing: 1rem;
+
+// Mixins
+@mixin button-styles {
+  padding: $spacing * 0.5 $spacing;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+// Styles
+.app {
+  text-align: center;
+  padding: $spacing * 2;
+
+  .title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: $spacing;
+    color: $text-color;
+  }
+
+  .button {
+    @include button-styles;
+    background-color: $primary-color;
+    color: white;
+
+    &:hover {
+      background-color: $primary-hover;
+    }
+  }
+}
+`
+	return writeFile(filepath.Join(projectPath, "src", "styles.scss"), stylesScss)
 }
 
 func generateVitestConfig(projectPath string, config models.Config) error {
