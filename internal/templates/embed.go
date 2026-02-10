@@ -25,6 +25,16 @@ type TemplateData struct {
 
 // PrepareTemplateData creates TemplateData with computed fields
 func PrepareTemplateData(config models.Config) TemplateData {
+	// Validate ProjectName to prevent template injection
+	// Only allow alphanumeric, hyphens, and underscores
+	for _, r := range config.ProjectName {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
+			(r >= '0' && r <= '9') || r == '-' || r == '_') {
+			config.ProjectName = "my-app" // safe fallback
+			break
+		}
+	}
+
 	data := TemplateData{
 		Config: config,
 	}
@@ -43,6 +53,8 @@ func PrepareTemplateData(config models.Config) TemplateData {
 	data.AppExt = computeAppFileExtension(config)
 
 	// Compute PmRun
+	// yarn/pnpm/bun support bare commands (e.g., "yarn dev"),
+	// but npm requires "npm run dev"
 	data.PmRun = config.PackageManager
 	if config.PackageManager == models.PackageManagerNpm {
 		data.PmRun = "npm run"
@@ -182,7 +194,8 @@ func RenderVitestConfig(config models.Config) (string, error) {
 	return Render(templatePath, config)
 }
 
-// RenderVitestSetup renders the appropriate Vitest setup file based on framework
+// RenderVitestSetup renders the appropriate Vitest setup file based on framework.
+// Uses RenderStatic because setup files contain no template directives.
 func RenderVitestSetup(config models.Config) (string, error) {
 	var templatePath string
 

@@ -227,10 +227,10 @@ func SetupProject(config models.Config) error {
 	if config.Styling == models.StylingTailwind {
 		indexCSS, err := templates.RenderStatic("static/index.css")
 		if err != nil {
-			return fmt.Errorf("failed to generate Tailwind config: %w", err)
+			return fmt.Errorf("failed to read Tailwind CSS import file: %w", err)
 		}
 		if err := writeOrCollect(filepath.Join(projectPath, "src", "index.css"), indexCSS); err != nil {
-			return fmt.Errorf("failed to write Tailwind config: %w", err)
+			return fmt.Errorf("failed to write index.css: %w", err)
 		}
 	}
 
