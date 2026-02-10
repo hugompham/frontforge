@@ -70,9 +70,6 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	// TypeScript
 	if config.Language == models.LangTypeScript {
 		pkg.DevDependencies["typescript"] = "^5.9.3"
-		if config.Framework == models.FrameworkReact {
-			pkg.DevDependencies["typescript-eslint"] = "^8.49.0"
-		}
 	}
 
 	// Routing
@@ -159,10 +156,15 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	pkg.DevDependencies["eslint"] = "^9.39.1"
 	pkg.DevDependencies["@eslint/js"] = "^9.39.1"
 	pkg.DevDependencies["globals"] = "^15.15.0"
+	pkg.DevDependencies["typescript-eslint"] = "^8.49.0"
 
-	if config.Framework == models.FrameworkReact {
+	// Framework-specific ESLint plugins
+	switch config.Framework {
+	case models.FrameworkReact:
 		pkg.DevDependencies["eslint-plugin-react-hooks"] = "^7.0.1"
 		pkg.DevDependencies["eslint-plugin-react-refresh"] = "^0.4.24"
+	case models.FrameworkVue:
+		pkg.DevDependencies["eslint-plugin-vue"] = "^10.2.0"
 	}
 
 	// UI Component Libraries

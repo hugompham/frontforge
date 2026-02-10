@@ -412,7 +412,11 @@ expect.extend(matchers);
 }
 
 func generateESLintConfig(projectPath string, config models.Config) error {
-	eslintConfig := `import js from '@eslint/js'
+	var eslintConfig string
+
+	switch config.Framework {
+	case models.FrameworkReact:
+		eslintConfig = `import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
@@ -441,5 +445,47 @@ export default tseslint.config(
   },
 )
 `
+	case models.FrameworkVue:
+		eslintConfig = `import js from '@eslint/js'
+import globals from 'globals'
+import pluginVue from 'eslint-plugin-vue'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      ...pluginVue.configs['flat/recommended'],
+    ],
+    files: ['**/*.{ts,tsx,vue}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+)
+`
+	default:
+		// Svelte, Solid, Vanilla - basic TypeScript + ESLint
+		eslintConfig = `import js from '@eslint/js'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+)
+`
+	}
+
 	return writeFile(filepath.Join(projectPath, "eslint.config.js"), eslintConfig)
 }
