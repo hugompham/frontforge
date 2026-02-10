@@ -249,8 +249,12 @@ func SetupProject(config models.Config) error {
 	}
 
 	// Generate ESLint config
-	if err := generateESLintConfig(projectPath, config, writeOrCollect); err != nil {
+	eslintConfig, err := templates.RenderESLintConfig(config)
+	if err != nil {
 		return fmt.Errorf("failed to generate ESLint config: %w", err)
+	}
+	if err := writeOrCollect(filepath.Join(projectPath, "eslint.config.js"), eslintConfig); err != nil {
+		return fmt.Errorf("failed to write ESLint config: %w", err)
 	}
 
 	// Run post-generation validation
@@ -597,89 +601,6 @@ expect.extend(matchers);
 	}
 
 	return writeFunc(filepath.Join(testDir, fmt.Sprintf("setup.%s", ext)), setupFile)
-}
-
-func generateESLintConfig(
-	projectPath string,
-	config models.Config,
-	writeFunc func(string, string) error,
-) error {
-	var eslintConfig string
-
-	switch config.Framework {
-	case models.FrameworkReact:
-		eslintConfig = `import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-
-export default tseslint.config(
-  { ignores: ['dist'] },
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['**/*.{ts,tsx}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-    plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-    },
-  },
-)
-`
-	case models.FrameworkVue:
-		eslintConfig = `import js from '@eslint/js'
-import globals from 'globals'
-import pluginVue from 'eslint-plugin-vue'
-import tseslint from 'typescript-eslint'
-
-export default tseslint.config(
-  { ignores: ['dist'] },
-  {
-    extends: [
-      js.configs.recommended,
-      ...tseslint.configs.recommended,
-      ...pluginVue.configs['flat/recommended'],
-    ],
-    files: ['**/*.{ts,tsx,vue}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-  },
-)
-`
-	default:
-		// Svelte, Solid, Vanilla - basic TypeScript + ESLint
-		eslintConfig = `import js from '@eslint/js'
-import globals from 'globals'
-import tseslint from 'typescript-eslint'
-
-export default tseslint.config(
-  { ignores: ['dist'] },
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['**/*.{ts,tsx}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-  },
-)
-`
-	}
-
-	return writeFunc(filepath.Join(projectPath, "eslint.config.js"), eslintConfig)
 }
 
 func generateViteSVG() string {
