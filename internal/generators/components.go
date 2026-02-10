@@ -69,6 +69,8 @@ func GenerateMainFile(config models.Config) string {
 
 		if config.Styling == models.StylingTailwind {
 			imports.WriteString("\nimport './index.css'")
+		} else if config.Styling == models.StylingBootstrap {
+			imports.WriteString("\nimport 'bootstrap/dist/css/bootstrap.min.css'")
 		}
 
 		appWrapper := "<App />"
@@ -113,6 +115,8 @@ createRoot(%s).render(
 
 		if config.Styling == models.StylingTailwind {
 			imports.WriteString("\nimport './index.css'")
+		} else if config.Styling == models.StylingBootstrap {
+			imports.WriteString("\nimport 'bootstrap/dist/css/bootstrap.min.css'")
 		}
 
 		appCode := "const app = createApp(App)"
