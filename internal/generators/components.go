@@ -3,6 +3,7 @@ package generators
 import (
 	"fmt"
 	"frontforge/internal/models"
+	"frontforge/internal/templates"
 	"strings"
 )
 
@@ -56,28 +57,12 @@ func getMainFileExtension(config models.Config) string {
 
 // GenerateIndexHTML creates the index.html file
 func GenerateIndexHTML(config models.Config) string {
-	ext := getMainFileExtension(config)
-
-	// Vue uses #app, all other frameworks use #root
-	mountID := "root"
-	if config.Framework == models.FrameworkVue {
-		mountID = "app"
+	html, err := templates.Render("static/index.html.tmpl", config)
+	if err != nil {
+		// Fallback to empty string on error (caller will handle)
+		return ""
 	}
-
-	return fmt.Sprintf(`<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>%s</title>
-  </head>
-  <body>
-    <div id="%s"></div>
-    <script type="module" src="/src/main.%s"></script>
-  </body>
-</html>
-`, config.ProjectName, mountID, ext)
+	return html
 }
 
 // GenerateMainFile creates the main entry file

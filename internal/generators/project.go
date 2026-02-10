@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"frontforge/internal/models"
+	"frontforge/internal/templates"
 	"os"
 	"path/filepath"
 )
@@ -162,7 +163,10 @@ func SetupProject(config models.Config) error {
 	}
 
 	// Generate vite.svg favicon
-	viteSVG := generateViteSVG()
+	viteSVG, err := templates.RenderStatic("static/vite.svg")
+	if err != nil {
+		return fmt.Errorf("failed to generate vite.svg: %w", err)
+	}
 	if err := writeOrCollect(filepath.Join(projectPath, "public", "vite.svg"), viteSVG); err != nil {
 		return fmt.Errorf("failed to write vite.svg: %w", err)
 	}
@@ -202,7 +206,10 @@ func SetupProject(config models.Config) error {
 	}
 
 	// Generate .gitignore
-	gitignore := generateGitignore()
+	gitignore, err := templates.RenderStatic("static/gitignore.tmpl")
+	if err != nil {
+		return fmt.Errorf("failed to generate .gitignore: %w", err)
+	}
 	if err := writeOrCollect(filepath.Join(projectPath, ".gitignore"), gitignore); err != nil {
 		return fmt.Errorf("failed to write .gitignore: %w", err)
 	}
