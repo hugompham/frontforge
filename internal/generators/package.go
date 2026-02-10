@@ -201,15 +201,13 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	// Animation
 	switch config.Animation {
 	case models.AnimationFramerMotion:
-		pkg.Dependencies["framer-motion"] = "^12.23.26"
+		pkg.Dependencies["motion"] = "^12.34.0"
 	case models.AnimationGSAP:
 		pkg.Dependencies["gsap"] = "^3.14.1"
 	case models.AnimationAutoAnimate:
 		pkg.Dependencies["@formkit/auto-animate"] = "^0.9.2"
 	case models.AnimationReactSpring:
 		pkg.Dependencies["@react-spring/web"] = "^9.8.2"
-	case models.AnimationMotionOne:
-		pkg.Dependencies["motion"] = "^11.17.0"
 	}
 
 	// Icons

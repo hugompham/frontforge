@@ -348,7 +348,7 @@ func adjustFrameworkDefaults(config *models.Config) {
 		config.StateManagement = models.StateSolidStores
 		config.UILibrary = models.UILibraryNone
 		config.FormManagement = models.FormNone
-		config.Animation = models.AnimationMotionOne
+		config.Animation = models.AnimationFramerMotion
 		config.Icons = models.IconsLucide
 		config.I18n = models.I18nNone
 	case models.FrameworkVanilla:

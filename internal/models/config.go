@@ -158,7 +158,6 @@ const (
 	AnimationGSAP         = "GSAP"
 	AnimationAutoAnimate  = "Auto Animate"
 	AnimationReactSpring  = "React Spring"
-	AnimationMotionOne    = "Motion One"
 	AnimationNone         = "None"
 )
 
