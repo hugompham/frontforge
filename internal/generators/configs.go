@@ -96,6 +96,12 @@ func GenerateTSConfig(config models.Config) TSConfigSet {
 		compilerOptions["jsxImportSource"] = "solid-js"
 	}
 
+	// Add Angular-specific compiler options
+	if config.Framework == models.FrameworkAngular {
+		compilerOptions["experimentalDecorators"] = true
+		compilerOptions["emitDecoratorMetadata"] = true
+	}
+
 	app := map[string]interface{}{
 		"compilerOptions": compilerOptions,
 		"include":         []string{"src"},
