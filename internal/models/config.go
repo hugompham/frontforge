@@ -31,6 +31,7 @@ type Config struct {
 	I18n            string
 	Structure       string
 	DryRun          bool // Preview mode - show what would be generated without writing files
+	AutoInstall     bool // Automatically run package manager install after generation
 }
 
 // SetupMode defines quick or custom setup

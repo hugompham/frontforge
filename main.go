@@ -20,6 +20,7 @@ func main() {
 	var showHelp bool
 	var quickMode bool
 	var dryRun bool
+	var autoInstall bool
 	var projectName string
 	var framework string
 	var language string
@@ -33,6 +34,7 @@ func main() {
 	// Non-interactive flags
 	flag.BoolVar(&quickMode, "quick", false, "Use quick preset (React + TypeScript + Tailwind) and skip interactive mode")
 	flag.BoolVar(&dryRun, "dry-run", false, "Preview mode: show what files would be generated without writing them")
+	flag.BoolVar(&autoInstall, "install", false, "Automatically run package manager install after generation")
 	flag.StringVar(&projectName, "name", "", "Project name (required for non-interactive mode)")
 	flag.StringVar(&framework, "framework", "", "Framework: react, vue, angular, svelte, solid, vanilla")
 	flag.StringVar(&language, "lang", "", "Language: ts, js")
@@ -49,7 +51,7 @@ func main() {
 
 	// Check if running in non-interactive mode
 	if quickMode || projectName != "" {
-		runNonInteractive(projectPath, projectName, quickMode, dryRun, framework, language, packageManager, styling)
+		runNonInteractive(projectPath, projectName, quickMode, dryRun, autoInstall, framework, language, packageManager, styling)
 		return
 	}
 
@@ -97,7 +99,7 @@ func main() {
 }
 
 // runNonInteractive generates a project without the interactive TUI
-func runNonInteractive(projectPath, projectName string, quickMode, dryRun bool, framework, language, packageManager, styling string) {
+func runNonInteractive(projectPath, projectName string, quickMode, dryRun, autoInstall bool, framework, language, packageManager, styling string) {
 	// Validate project name is provided
 	if projectName == "" {
 		fmt.Println("Error: -name flag is required for non-interactive mode")
@@ -115,6 +117,7 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun bool, 
 	config := models.QuickPreset()
 	config.ProjectName = projectName
 	config.DryRun = dryRun
+	config.AutoInstall = autoInstall
 
 	// Apply overrides if provided
 	if framework != "" {
@@ -196,7 +199,7 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun bool, 
 
 	// Print configuration summary
 	fmt.Println()
-	fmt.Println("⚡ FrontForge - Non-Interactive Mode")
+	fmt.Println("FrontForge - Non-Interactive Mode")
 	fmt.Println()
 	fmt.Printf("  Project:   %s\n", config.ProjectName)
 	fmt.Printf("  Path:      %s\n", config.ProjectPath)
@@ -212,9 +215,9 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun bool, 
 
 	for _, check := range results.Checks {
 		if check.Passed {
-			fmt.Printf("  ✓ %s\n", check.Name)
+			fmt.Printf("  [OK] %s\n", check.Name)
 		} else {
-			fmt.Printf("  ✗ %s: %s\n", check.Name, check.Message)
+			fmt.Printf("  [FAIL] %s: %s\n", check.Name, check.Message)
 			if check.Suggestion != "" {
 				fmt.Printf("    → %s\n", check.Suggestion)
 			}
@@ -236,9 +239,27 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun bool, 
 		os.Exit(1)
 	}
 
+	// Run install if requested (only for actual generation, not dry-run)
+	if config.AutoInstall && !config.DryRun {
+		fmt.Println()
+		fmt.Printf("Running %s install...\n", config.PackageManager)
+		fmt.Println()
+
+		if err := generators.RunInstall(config.ProjectPath, config); err != nil {
+			fmt.Println()
+			fmt.Printf("Warning: Install failed: %v\n", err)
+			fmt.Println("You can run the install manually with:")
+			fmt.Printf("  cd %s\n", config.ProjectName)
+			fmt.Printf("  %s install\n", config.PackageManager)
+		} else {
+			fmt.Println()
+			fmt.Println("Dependencies installed successfully!")
+		}
+	}
+
 	// Success message
 	fmt.Println()
-	fmt.Println("✓ Project created successfully!")
+	fmt.Println("Project created successfully!")
 	fmt.Println()
 	fmt.Println("Next steps:")
 
@@ -248,7 +269,11 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun bool, 
 		fmt.Printf("  cd %s\n", config.ProjectName)
 	}
 
-	fmt.Printf("  %s install\n", config.PackageManager)
+	// Skip install step if auto-install was used successfully
+	if !config.AutoInstall || config.DryRun {
+		fmt.Printf("  %s install\n", config.PackageManager)
+	}
+
 	fmt.Printf("  %s run dev\n", getRunCommand(config.PackageManager))
 	fmt.Println()
 }
