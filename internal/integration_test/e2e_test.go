@@ -5,6 +5,7 @@ import (
 	"frontforge/internal/models"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -278,21 +279,48 @@ func TestValidateProject(t *testing.T) {
 
 // TestInvalidProjectPath tests error handling for invalid paths
 func TestInvalidProjectPath(t *testing.T) {
-	tests := []struct {
+	// Use platform-specific forbidden paths
+	var tests []struct {
 		name        string
 		projectPath string
 		wantError   bool
-	}{
-		{
-			name:        "Root directory",
-			projectPath: "/",
-			wantError:   true,
-		},
-		{
-			name:        "System directory",
-			projectPath: "/usr/bin/test",
-			wantError:   true,
-		},
+	}
+
+	if runtime.GOOS == "windows" {
+		tests = []struct {
+			name        string
+			projectPath string
+			wantError   bool
+		}{
+			{
+				name:        "Windows system directory",
+				projectPath: "C:\\Windows",
+				wantError:   true,
+			},
+			{
+				name:        "Program Files",
+				projectPath: "C:\\Program Files",
+				wantError:   true,
+			},
+		}
+	} else {
+		// Unix-like systems (Linux, macOS)
+		tests = []struct {
+			name        string
+			projectPath string
+			wantError   bool
+		}{
+			{
+				name:        "Root directory",
+				projectPath: "/",
+				wantError:   true,
+			},
+			{
+				name:        "System directory",
+				projectPath: "/usr/bin/test",
+				wantError:   true,
+			},
+		}
 	}
 
 	for _, tt := range tests {
