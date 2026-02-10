@@ -9,10 +9,10 @@ import (
 
 func TestGenerateIndexHTML(t *testing.T) {
 	tests := []struct {
-		name           string
-		config         models.Config
-		wantMountID    string
-		wantScriptExt  string
+		name          string
+		config        models.Config
+		wantMountID   string
+		wantScriptExt string
 	}{
 		{
 			name: "React TypeScript",
@@ -115,9 +115,9 @@ func TestGenerateIndexHTML(t *testing.T) {
 
 func TestGenerateMainFile(t *testing.T) {
 	tests := []struct {
-		name          string
-		config        models.Config
-		wantImports   []string
+		name           string
+		config         models.Config
+		wantImports    []string
 		wantNotContain string
 	}{
 		{

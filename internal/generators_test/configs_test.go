@@ -11,9 +11,9 @@ import (
 
 func TestGenerateViteConfig(t *testing.T) {
 	tests := []struct {
-		name         string
-		config       models.Config
-		wantPlugins  []string
+		name        string
+		config      models.Config
+		wantPlugins []string
 	}{
 		{
 			name: "React with Tailwind",
@@ -85,10 +85,10 @@ func TestGenerateViteConfig(t *testing.T) {
 
 func TestGenerateTSConfig(t *testing.T) {
 	tests := []struct {
-		name              string
-		config            models.Config
-		wantJsx           string
-		wantExtraOptions  map[string]interface{}
+		name             string
+		config           models.Config
+		wantJsx          string
+		wantExtraOptions map[string]interface{}
 	}{
 		{
 			name: "React",
@@ -121,8 +121,8 @@ func TestGenerateTSConfig(t *testing.T) {
 			},
 			wantJsx: "preserve",
 			wantExtraOptions: map[string]interface{}{
-				"experimentalDecorators":  true,
-				"emitDecoratorMetadata": true,
+				"experimentalDecorators": true,
+				"emitDecoratorMetadata":  true,
 			},
 		},
 	}
@@ -166,10 +166,10 @@ func TestGenerateTSConfig(t *testing.T) {
 
 func TestGenerateProjectStructure(t *testing.T) {
 	tests := []struct {
-		name           string
-		config         models.Config
-		wantDirs       []string
-		wantFiles      []string
+		name      string
+		config    models.Config
+		wantDirs  []string
+		wantFiles []string
 	}{
 		{
 			name: "Feature-based",
