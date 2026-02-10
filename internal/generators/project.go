@@ -191,31 +191,6 @@ func SetupProject(config models.Config) error {
 	return nil
 }
 
-// CleanupCLI removes CLI files after project generation
-func CleanupCLI() error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	filesToRemove := []string{
-		"cli",
-		"node_modules",
-		"package-lock.json",
-		"go.mod",
-		"go.sum",
-		"internal",
-		"main.go",
-	}
-
-	for _, file := range filesToRemove {
-		filePath := filepath.Join(cwd, file)
-		_ = os.RemoveAll(filePath) // Ignore errors
-	}
-
-	return nil
-}
-
 // Helper functions
 func writeFile(path, content string) error {
 	return os.WriteFile(path, []byte(content), 0644)
