@@ -51,12 +51,12 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	case models.FrameworkReact:
 		pkg.Dependencies["react"] = "^19.2.1"
 		pkg.Dependencies["react-dom"] = "^19.2.1"
-		pkg.DevDependencies["@vitejs/plugin-react"] = "^5.1.2"
+		pkg.DevDependencies["@vitejs/plugin-react"] = "^5.1.4"
 		pkg.DevDependencies["@types/react"] = "^19.2.7"
 		pkg.DevDependencies["@types/react-dom"] = "^19.2.3"
 	case models.FrameworkVue:
 		pkg.Dependencies["vue"] = "^3.5.13"
-		pkg.DevDependencies["@vitejs/plugin-vue"] = "^6.0.2"
+		pkg.DevDependencies["@vitejs/plugin-vue"] = "^6.0.4"
 	case models.FrameworkSvelte:
 		pkg.Dependencies["svelte"] = "^5.30.0"
 		pkg.DevDependencies["@sveltejs/vite-plugin-svelte"] = "^6.2.1"
