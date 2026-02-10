@@ -14,9 +14,13 @@ var templateFS embed.FS
 // TemplateData holds all data for template rendering, including computed fields
 type TemplateData struct {
 	models.Config
-	MountID string // Computed: "app" for Vue, "root" for others
-	MainExt string // Computed: main file extension (tsx, ts, js)
-	AppExt  string // Computed: app file extension (tsx, vue, svelte, ts, js)
+	MountID          string // Computed: "app" for Vue, "root" for others
+	MainExt          string // Computed: main file extension (tsx, ts, js)
+	AppExt           string // Computed: app file extension (tsx, vue, svelte, ts, js)
+	PmRun            string // Computed: package manager run command
+	StructureExample string // Computed: project structure markdown
+	FrameworkDocURL  string // Computed: framework documentation URL
+	VitestExt        string // Computed: vitest config/setup extension (ts or js)
 }
 
 // PrepareTemplateData creates TemplateData with computed fields
@@ -37,6 +41,25 @@ func PrepareTemplateData(config models.Config) TemplateData {
 
 	// Compute AppExt
 	data.AppExt = computeAppFileExtension(config)
+
+	// Compute PmRun
+	data.PmRun = config.PackageManager
+	if config.PackageManager == models.PackageManagerNpm {
+		data.PmRun = "npm run"
+	}
+
+	// Compute StructureExample
+	data.StructureExample = computeStructureExample(config)
+
+	// Compute FrameworkDocURL
+	data.FrameworkDocURL = computeFrameworkDocURL(config.Framework)
+
+	// Compute VitestExt
+	if config.Language == models.LangTypeScript {
+		data.VitestExt = "ts"
+	} else {
+		data.VitestExt = "js"
+	}
 
 	return data
 }
@@ -139,4 +162,74 @@ func RenderESLintConfig(config models.Config) (string, error) {
 	}
 
 	return RenderStatic(templatePath)
+}
+
+// RenderVitestConfig renders the appropriate Vitest config based on framework
+func RenderVitestConfig(config models.Config) (string, error) {
+	var templatePath string
+
+	switch config.Framework {
+	case models.FrameworkReact:
+		templatePath = "config/vitest-react.tmpl"
+	case models.FrameworkVue:
+		templatePath = "config/vitest-vue.tmpl"
+	case models.FrameworkSvelte:
+		templatePath = "config/vitest-svelte.tmpl"
+	default:
+		templatePath = "config/vitest-default.tmpl"
+	}
+
+	return Render(templatePath, config)
+}
+
+// RenderVitestSetup renders the appropriate Vitest setup file based on framework
+func RenderVitestSetup(config models.Config) (string, error) {
+	var templatePath string
+
+	switch config.Framework {
+	case models.FrameworkReact:
+		templatePath = "config/vitest-setup-react.tmpl"
+	case models.FrameworkVue:
+		templatePath = "config/vitest-setup-vue.tmpl"
+	case models.FrameworkSvelte:
+		templatePath = "config/vitest-setup-svelte.tmpl"
+	default:
+		templatePath = "config/vitest-setup-default.tmpl"
+	}
+
+	return RenderStatic(templatePath)
+}
+
+// computeStructureExample returns the project structure markdown for README
+func computeStructureExample(config models.Config) string {
+	ext := "jsx"
+	if config.Language == models.LangTypeScript {
+		ext = "tsx"
+	}
+
+	if config.Structure == models.StructureFeatureBased {
+		return fmt.Sprintf("```\nsrc/\n├── features/          # Feature-based modules\n│   ├── auth/\n│   ├── dashboard/\n│   └── users/\n├── components/        # Shared components\n├── lib/              # Utilities and helpers\n├── App.%s\n└── main.%s\n```", ext, ext)
+	}
+
+	return fmt.Sprintf("```\nsrc/\n├── components/       # UI components\n├── pages/           # Page components\n├── services/        # API services\n├── utils/           # Utility functions\n├── App.%s\n└── main.%s\n```", ext, ext)
+}
+
+// computeFrameworkDocURL returns the documentation URL for a framework
+func computeFrameworkDocURL(framework string) string {
+	switch framework {
+	case models.FrameworkReact:
+		return "https://react.dev"
+	case models.FrameworkVue:
+		return "https://vuejs.org"
+	case models.FrameworkAngular:
+		return "https://angular.dev"
+	case models.FrameworkSvelte:
+		return "https://svelte.dev"
+	case models.FrameworkSolid:
+		return "https://www.solidjs.com"
+	case models.FrameworkVanilla:
+		return "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
+	default:
+		return "https://vitejs.dev"
+	}
 }
