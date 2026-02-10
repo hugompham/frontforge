@@ -238,7 +238,13 @@ func runNonInteractive(projectPath, projectName string, quickMode bool, framewor
 	fmt.Println("✓ Project created successfully!")
 	fmt.Println()
 	fmt.Println("Next steps:")
-	fmt.Printf("  cd %s\n", config.ProjectName)
+
+	// Only show cd command if project was created in a subdirectory
+	cwd, _ := filepath.Abs(".")
+	if config.ProjectPath != cwd {
+		fmt.Printf("  cd %s\n", config.ProjectName)
+	}
+
 	fmt.Printf("  %s install\n", config.PackageManager)
 	fmt.Printf("  %s run dev\n", getRunCommand(config.PackageManager))
 	fmt.Println()
