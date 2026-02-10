@@ -131,14 +131,32 @@ func SetupProject(config models.Config) error {
 	if config.Language == models.LangTypeScript {
 		ext = "tsx"
 	}
+
+	// Angular uses .ts extension always (no .tsx)
+	if config.Framework == models.FrameworkAngular {
+		ext = "ts"
+	}
+
 	if err := writeFile(filepath.Join(projectPath, "src", fmt.Sprintf("main.%s", ext)), mainFile); err != nil {
 		return fmt.Errorf("failed to write main file: %w", err)
 	}
 
 	// Generate App component
 	appFile := GenerateAppFile(config)
-	if err := writeFile(filepath.Join(projectPath, "src", fmt.Sprintf("App.%s", ext)), appFile); err != nil {
-		return fmt.Errorf("failed to write App file: %w", err)
+
+	// Angular components go in app/ directory
+	if config.Framework == models.FrameworkAngular {
+		// Create app directory
+		if err := os.MkdirAll(filepath.Join(projectPath, "src", "app"), 0755); err != nil {
+			return fmt.Errorf("failed to create app directory: %w", err)
+		}
+		if err := writeFile(filepath.Join(projectPath, "src", "app", "app.component.ts"), appFile); err != nil {
+			return fmt.Errorf("failed to write App component: %w", err)
+		}
+	} else {
+		if err := writeFile(filepath.Join(projectPath, "src", fmt.Sprintf("App.%s", ext)), appFile); err != nil {
+			return fmt.Errorf("failed to write App file: %w", err)
+		}
 	}
 
 	// Generate .gitignore

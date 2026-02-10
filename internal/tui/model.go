@@ -187,7 +187,7 @@ func (m *Model) createForm() *huh.Form {
 				Options(
 					huh.NewOption("React", models.FrameworkReact),
 					huh.NewOption("Vue", models.FrameworkVue),
-					huh.NewOption("Angular", models.FrameworkAngular),
+					huh.NewOption("Angular (standalone)", models.FrameworkAngular),
 					huh.NewOption("Svelte", models.FrameworkSvelte),
 					huh.NewOption("Solid", models.FrameworkSolid),
 					huh.NewOption("Vanilla (no framework)", models.FrameworkVanilla),

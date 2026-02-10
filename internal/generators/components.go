@@ -138,6 +138,14 @@ createRoot(%s).render(
 %s
 app.mount('#app')
 `, imports.String(), appCode)
+	} else if config.Framework == models.FrameworkAngular {
+		// Angular uses bootstrapApplication with standalone components
+		return `import { bootstrapApplication } from '@angular/platform-browser'
+import { AppComponent } from './app/app.component'
+
+bootstrapApplication(AppComponent)
+  .catch(err => console.error(err))
+`
 	}
 
 	// Default for other frameworks
@@ -318,6 +326,44 @@ const count = ref(0)
 			config.ProjectName,
 			getTailwindButtonClass(config, "blue"),
 			getVueStyles(config))
+	} else if config.Framework == models.FrameworkAngular {
+		// Angular standalone component
+		return fmt.Sprintf(`import { Component } from '@angular/core'
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  template: `+"`"+`
+    <div style="text-align: center; padding: 60px;">
+      <h1>Welcome to %s</h1>
+      <button (click)="increment()">
+        Count is {{ count }}
+      </button>
+    </div>
+  `+"`"+`,
+  styles: [`+"`"+`
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #1565c0;
+    }
+  `+"`"+`]
+})
+export class AppComponent {
+  count = 0
+
+  increment() {
+    this.count++
+  }
+}
+`, config.ProjectName)
 	}
 
 	// Default for other frameworks

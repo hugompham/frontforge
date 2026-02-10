@@ -28,6 +28,9 @@ func GenerateViteConfig(config models.Config) string {
 	case models.FrameworkSolid:
 		imports.WriteString("import solid from 'vite-plugin-solid'\n")
 		plugins = append(plugins, "solid()")
+	case models.FrameworkAngular:
+		imports.WriteString("import angular from '@analogjs/vite-plugin-angular'\n")
+		plugins = append(plugins, "angular()")
 	}
 
 	// Add Tailwind CSS 4 plugin

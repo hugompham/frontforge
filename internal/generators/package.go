@@ -26,14 +26,10 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	}
 
 	// Scripts based on framework
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte {
+	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkAngular || config.Framework == models.FrameworkSolid {
 		pkg.Scripts["dev"] = "vite"
 		pkg.Scripts["build"] = "vite build"
 		pkg.Scripts["preview"] = "vite preview"
-	} else if config.Framework == models.FrameworkAngular {
-		pkg.Scripts["dev"] = "ng serve"
-		pkg.Scripts["build"] = "ng build"
-		pkg.Scripts["test"] = "ng test"
 	}
 
 	// Lint script
@@ -63,10 +59,23 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 	case models.FrameworkSolid:
 		pkg.Dependencies["solid-js"] = "^1.9.11"
 		pkg.DevDependencies["vite-plugin-solid"] = "^2.11.10"
+	case models.FrameworkAngular:
+		// Angular 19 core packages
+		pkg.Dependencies["@angular/core"] = "^19.2.0"
+		pkg.Dependencies["@angular/common"] = "^19.2.0"
+		pkg.Dependencies["@angular/platform-browser"] = "^19.2.0"
+		pkg.Dependencies["@angular/platform-browser-dynamic"] = "^19.2.0"
+		pkg.Dependencies["@angular/compiler"] = "^19.2.0"
+		// Angular dependencies
+		pkg.Dependencies["rxjs"] = "^7.8.1"
+		pkg.Dependencies["zone.js"] = "^0.15.0"
+		pkg.Dependencies["tslib"] = "^2.8.1"
+		// Vite plugin for Angular (AnalogJS)
+		pkg.DevDependencies["@analogjs/vite-plugin-angular"] = "^1.11.0"
 	}
 
 	// Vite
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkSolid {
+	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkSolid || config.Framework == models.FrameworkAngular {
 		pkg.DevDependencies["vite"] = "^7.2.7"
 	}
 
