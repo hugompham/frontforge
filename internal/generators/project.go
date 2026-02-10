@@ -119,6 +119,12 @@ func SetupProject(config models.Config) error {
 		return fmt.Errorf("failed to write index.html: %w", err)
 	}
 
+	// Generate vite.svg favicon
+	viteSVG := generateViteSVG()
+	if err := writeFile(filepath.Join(projectPath, "public", "vite.svg"), viteSVG); err != nil {
+		return fmt.Errorf("failed to write vite.svg: %w", err)
+	}
+
 	// Generate main entry file
 	mainFile := GenerateMainFile(config)
 	ext := "jsx"
@@ -575,4 +581,13 @@ export default tseslint.config(
 	}
 
 	return writeFile(filepath.Join(projectPath, "eslint.config.js"), eslintConfig)
+}
+
+func generateViteSVG() string {
+	// Simple Vite-themed SVG logo (lightning bolt in circle)
+	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10" stroke="#646cff" fill="none"/>
+  <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" fill="#646cff"/>
+</svg>
+`
 }
