@@ -185,6 +185,12 @@ func runNonInteractive(projectPath, projectName string, quickMode bool, framewor
 
 	config.ProjectPath = absPath
 
+	// Validate framework + library compatibility
+	if err := validateCompatibility(&config); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
 	// Print configuration summary
 	fmt.Println()
 	fmt.Println("⚡ FrontForge - Non-Interactive Mode")
@@ -246,6 +252,100 @@ func isValidProjectName(name string) bool {
 		}
 	}
 	return len(name) > 0
+}
+
+// validateCompatibility checks for incompatible framework + library combinations
+func validateCompatibility(config *models.Config) error {
+	// Validate routing compatibility
+	switch config.Framework {
+	case models.FrameworkReact:
+		if config.Routing != models.RoutingReactRouter && config.Routing != models.RoutingTanStackRouter && config.Routing != models.RoutingFileBased && config.Routing != models.RoutingNone {
+			return fmt.Errorf("routing '%s' is not compatible with React", config.Routing)
+		}
+	case models.FrameworkVue:
+		if config.Routing != models.RoutingVueRouter && config.Routing != models.RoutingNone {
+			return fmt.Errorf("routing '%s' is not compatible with Vue", config.Routing)
+		}
+	case models.FrameworkSvelte:
+		if config.Routing != models.RoutingSvelteKit && config.Routing != models.RoutingNone {
+			return fmt.Errorf("routing '%s' is not compatible with Svelte", config.Routing)
+		}
+	case models.FrameworkSolid:
+		if config.Routing != models.RoutingSolidRouter && config.Routing != models.RoutingNone {
+			return fmt.Errorf("routing '%s' is not compatible with Solid", config.Routing)
+		}
+	}
+
+	// Validate state management compatibility
+	switch config.Framework {
+	case models.FrameworkReact:
+		if config.StateManagement != models.StateZustand && config.StateManagement != models.StateReduxToolkit && config.StateManagement != models.StateContextAPI && config.StateManagement != models.StateNone {
+			return fmt.Errorf("state management '%s' is not compatible with React", config.StateManagement)
+		}
+	case models.FrameworkVue:
+		if config.StateManagement != models.StatePinia && config.StateManagement != models.StateVuex && config.StateManagement != models.StateNone {
+			return fmt.Errorf("state management '%s' is not compatible with Vue", config.StateManagement)
+		}
+	case models.FrameworkSvelte:
+		if config.StateManagement != models.StateSvelteStores && config.StateManagement != models.StateNone {
+			return fmt.Errorf("state management '%s' is not compatible with Svelte", config.StateManagement)
+		}
+	case models.FrameworkSolid:
+		if config.StateManagement != models.StateSolidStores && config.StateManagement != models.StateNone {
+			return fmt.Errorf("state management '%s' is not compatible with Solid", config.StateManagement)
+		}
+	}
+
+	// Validate UI library compatibility
+	reactUILibs := []string{models.UILibraryMUI, models.UILibraryChakra, models.UILibraryAntD, models.UILibraryShadcn, models.UILibraryHeadless}
+	vueUILibs := []string{models.UILibraryVuetify, models.UILibraryPrimeVue, models.UILibraryElementUI, models.UILibraryNaiveUI}
+	angularUILibs := []string{models.UILibraryAngularMaterial, models.UILibraryPrimeNG, models.UILibraryNGZorro}
+
+	if config.Framework != models.FrameworkReact {
+		for _, lib := range reactUILibs {
+			if config.UILibrary == lib {
+				return fmt.Errorf("UI library '%s' is only compatible with React", lib)
+			}
+		}
+	}
+
+	if config.Framework != models.FrameworkVue {
+		for _, lib := range vueUILibs {
+			if config.UILibrary == lib {
+				return fmt.Errorf("UI library '%s' is only compatible with Vue", lib)
+			}
+		}
+	}
+
+	if config.Framework != models.FrameworkAngular {
+		for _, lib := range angularUILibs {
+			if config.UILibrary == lib {
+				return fmt.Errorf("UI library '%s' is only compatible with Angular", lib)
+			}
+		}
+	}
+
+	// Validate form management compatibility
+	reactFormLibs := []string{models.FormReactHookForm, models.FormFormik, models.FormTanStackForm}
+	vueFormLibs := []string{models.FormVeeValidate}
+
+	if config.Framework != models.FrameworkReact {
+		for _, lib := range reactFormLibs {
+			if config.FormManagement == lib {
+				return fmt.Errorf("form management '%s' is only compatible with React", lib)
+			}
+		}
+	}
+
+	if config.Framework != models.FrameworkVue {
+		for _, lib := range vueFormLibs {
+			if config.FormManagement == lib {
+				return fmt.Errorf("form management '%s' is only compatible with Vue", lib)
+			}
+		}
+	}
+
+	return nil
 }
 
 // parseFramework converts a short framework name to the full constant
