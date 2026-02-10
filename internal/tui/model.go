@@ -556,6 +556,17 @@ func validateProjectName(name string) bool {
 	return true
 }
 
+// ValidateProjectName is the public version of validateProjectName for testing
+func ValidateProjectName(name string) error {
+	if name == "" {
+		return fmt.Errorf("project name is required")
+	}
+	if !validateProjectName(name) {
+		return fmt.Errorf("project name must contain only alphanumeric characters, hyphens, and underscores")
+	}
+	return nil
+}
+
 // applyFormDataToConfig converts form field values to config
 func (m *Model) applyFormDataToConfig() {
 	m.config.ProjectName = m.formState.ProjectName
@@ -626,4 +637,36 @@ func (m *Model) applyFormDataToConfig() {
 		m.config.Routing = m.formState.Routing
 		m.config.StateManagement = m.formState.StateManagement
 	}
+}
+
+// Public methods for testing
+
+// GetCurrentState returns the current state
+func (m Model) GetCurrentState() State {
+	return m.currentState
+}
+
+// SetCurrentState sets the current state (for testing)
+func (m *Model) SetCurrentState(s State) {
+	m.currentState = s
+}
+
+// GetFormState returns the form state
+func (m Model) GetFormState() state.FormState {
+	return m.formState
+}
+
+// SetFormState sets the form state (for testing)
+func (m *Model) SetFormState(fs state.FormState) {
+	m.formState = fs
+}
+
+// GetConfig returns the config
+func (m Model) GetConfig() models.Config {
+	return m.config
+}
+
+// ApplyFormDataToConfig is a public version of applyFormDataToConfig for testing
+func (m *Model) ApplyFormDataToConfig() {
+	m.applyFormDataToConfig()
 }
