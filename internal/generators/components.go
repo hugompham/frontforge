@@ -34,6 +34,12 @@ func getFileExtension(config models.Config) string {
 func GenerateIndexHTML(config models.Config) string {
 	ext := getFileExtension(config)
 
+	// Vue uses #app, all other frameworks use #root
+	mountID := "root"
+	if config.Framework == models.FrameworkVue {
+		mountID = "app"
+	}
+
 	return fmt.Sprintf(`<!doctype html>
 <html lang="en">
   <head>
@@ -43,11 +49,11 @@ func GenerateIndexHTML(config models.Config) string {
     <title>%s</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="%s"></div>
     <script type="module" src="/src/main.%s"></script>
   </body>
 </html>
-`, config.ProjectName, ext)
+`, config.ProjectName, mountID, ext)
 }
 
 // GenerateMainFile creates the main entry file
