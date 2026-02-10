@@ -105,10 +105,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "y", "Y", "enter":
 				// User confirmed - go back to edit
-				m.form = m.createForm()
+				// Preserve existing form and its position, just make it editable again
 				m.form.State = huh.StateNormal
 				m.currentState = StateBlueprint
-				return m, m.form.Init()
+				return m, nil
 			case "n", "N", "esc":
 				// User cancelled - stay on review
 				m.currentState = StateReview
