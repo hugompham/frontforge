@@ -13,35 +13,18 @@ type LayoutState struct {
 // NewLayoutState creates a LayoutState with safe defaults
 func NewLayoutState() LayoutState {
 	// Safe defaults for initial render before WindowSizeMsg
-	initialWidth := 80
-	initialHeight := 24
-
+	// AdaptiveBox will be calculated by parent package using CalculateBoxWidth
 	return LayoutState{
-		Width:       initialWidth,
-		Height:      initialHeight,
-		AdaptiveBox: calculateBoxWidth(initialWidth),
+		Width:       80,
+		Height:      24,
+		AdaptiveBox: 76, // Default box width
 	}
 }
 
 // Update updates the layout state when terminal size changes
+// Note: AdaptiveBox should be calculated by parent using CalculateBoxWidth
 func (l *LayoutState) Update(width, height int) {
 	l.Width = width
 	l.Height = height
-	l.AdaptiveBox = calculateBoxWidth(width)
-}
-
-// calculateBoxWidth determines adaptive box width based on terminal width
-func calculateBoxWidth(terminalWidth int) int {
-	const (
-		minBoxWidth = 60
-		maxBoxWidth = 100
-		defaultBox  = 76
-	)
-
-	if terminalWidth < 80 {
-		return minBoxWidth
-	} else if terminalWidth > 120 {
-		return maxBoxWidth
-	}
-	return defaultBox
+	// AdaptiveBox is set separately by parent package
 }
