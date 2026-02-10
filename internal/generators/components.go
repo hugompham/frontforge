@@ -30,9 +30,33 @@ func getFileExtension(config models.Config) string {
 	}
 }
 
+// getMainFileExtension returns the correct file extension for the main entry file
+func getMainFileExtension(config models.Config) string {
+	isTS := config.Language == models.LangTypeScript
+
+	// Angular always uses .ts (no .tsx)
+	if config.Framework == models.FrameworkAngular {
+		return "ts"
+	}
+
+	// Vanilla uses plain .js or .ts (no JSX)
+	if config.Framework == models.FrameworkVanilla {
+		if isTS {
+			return "ts"
+		}
+		return "js"
+	}
+
+	// All other frameworks (React, Vue, Svelte, Solid) use JSX/TSX for the main file
+	if isTS {
+		return "tsx"
+	}
+	return "jsx"
+}
+
 // GenerateIndexHTML creates the index.html file
 func GenerateIndexHTML(config models.Config) string {
-	ext := getFileExtension(config)
+	ext := getMainFileExtension(config)
 
 	// Vue uses #app, all other frameworks use #root
 	mountID := "root"
@@ -146,9 +170,37 @@ import { AppComponent } from './app/app.component'
 bootstrapApplication(AppComponent)
   .catch(err => console.error(err))
 `
+	} else if config.Framework == models.FrameworkSvelte {
+		// Svelte 5 uses mount() instead of new App()
+		return fmt.Sprintf(`import { mount } from 'svelte'
+import App from './App.svelte'
+
+mount(App, {
+  target: document.getElementById('root')!
+})
+`)
+	} else if config.Framework == models.FrameworkSolid {
+		// Solid uses render from solid-js/web
+		return fmt.Sprintf(`import { render } from 'solid-js/web'
+import App from './App.%s'
+
+const root = document.getElementById('root')
+if (root) {
+  render(() => <App />, root)
+}
+`, ext)
+	} else if config.Framework == models.FrameworkVanilla {
+		// Vanilla JS/TS - minimal setup
+		return fmt.Sprintf(`import App from './App.%s'
+
+const root = document.getElementById('root')
+if (root) {
+  root.innerHTML = App()
+}
+`, ext)
 	}
 
-	// Default for other frameworks
+	// Fallback (shouldn't reach here)
 	return fmt.Sprintf(`import App from './App.%s'
 
 const root = document.getElementById('root')
@@ -364,9 +416,100 @@ export class AppComponent {
   }
 }
 `, config.ProjectName)
+	} else if config.Framework == models.FrameworkSvelte {
+		// Svelte component (SFC)
+		return fmt.Sprintf(`<script>
+  let count = $state(0)
+</script>
+
+<main>
+  <div class="container">
+    <h1>Welcome to %s</h1>
+    <button onclick={() => count++}>
+      Count is {count}
+    </button>
+  </div>
+</main>
+
+<style>
+  .container {
+    text-align: center;
+    padding: 60px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+</style>
+`, config.ProjectName)
+	} else if config.Framework == models.FrameworkSolid {
+		// Solid component with createSignal
+		return fmt.Sprintf(`import { createSignal } from 'solid-js'
+
+function App() {
+  const [count, setCount] = createSignal(0)
+
+  return (
+    <div style="text-align: center; padding: 60px;">
+      <h1>Welcome to %s</h1>
+      <button
+        onClick={() => setCount(count() + 1)}
+        style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px;"
+      >
+        Count is {count()}
+      </button>
+    </div>
+  )
+}
+
+export default App
+`, config.ProjectName)
+	} else if config.Framework == models.FrameworkVanilla {
+		// Vanilla JS/TS - returns HTML string
+		typeAnnotation := ""
+		if isTS {
+			typeAnnotation = ": string"
+		}
+		return fmt.Sprintf(`export default function App()%s {
+  return `+"`"+`
+    <div style="text-align: center; padding: 60px;">
+      <h1>Welcome to %s</h1>
+      <button id="counter" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px;">
+        Count is 0
+      </button>
+    </div>
+  `+"`"+`
+}
+
+// Add event listener after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  let count = 0
+  const button = document.getElementById('counter')
+  button?.addEventListener('click', () => {
+    count++
+    if (button) button.textContent = `+"`Count is ${count}`"+`
+  })
+})
+`, typeAnnotation, config.ProjectName)
 	}
 
-	// Default for other frameworks
+	// Fallback (shouldn't reach here)
 	return fmt.Sprintf(`function App() {
   return (
     <div>

@@ -25,8 +25,8 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 		DevDependencies: make(map[string]string),
 	}
 
-	// Scripts based on framework
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkAngular || config.Framework == models.FrameworkSolid {
+	// Scripts based on framework - all Vite-based frameworks
+	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkAngular || config.Framework == models.FrameworkSolid || config.Framework == models.FrameworkVanilla {
 		pkg.Scripts["dev"] = "vite"
 		pkg.Scripts["build"] = "vite build"
 		pkg.Scripts["preview"] = "vite preview"
@@ -74,8 +74,8 @@ func GeneratePackageJSON(config models.Config) PackageJSON {
 		pkg.DevDependencies["@analogjs/vite-plugin-angular"] = "^1.11.0"
 	}
 
-	// Vite
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkSolid || config.Framework == models.FrameworkAngular {
+	// Vite - all Vite-based frameworks
+	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkSolid || config.Framework == models.FrameworkAngular || config.Framework == models.FrameworkVanilla {
 		pkg.DevDependencies["vite"] = "^7.2.7"
 	}
 

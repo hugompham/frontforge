@@ -82,8 +82,8 @@ func SetupProject(config models.Config) error {
 	}
 	trackPath(packageJSONPath)
 
-	// Generate vite.config for React, Vue, Svelte
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte {
+	// Generate vite.config for all Vite-based frameworks
+	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkSolid || config.Framework == models.FrameworkAngular || config.Framework == models.FrameworkVanilla {
 		viteConfig := GenerateViteConfig(config)
 		ext := "js"
 		if config.Language == models.LangTypeScript {
