@@ -6,12 +6,33 @@ import (
 	"strings"
 )
 
+// getFileExtension returns the correct file extension based on framework and language
+func getFileExtension(config models.Config) string {
+	isTS := config.Language == models.LangTypeScript
+
+	switch config.Framework {
+	case models.FrameworkVue:
+		return "vue"
+	case models.FrameworkSvelte:
+		return "svelte"
+	case models.FrameworkVanilla, models.FrameworkAngular:
+		// Vanilla and Angular use plain JS/TS (no JSX)
+		if isTS {
+			return "ts"
+		}
+		return "js"
+	default:
+		// React, Solid use JSX/TSX
+		if isTS {
+			return "tsx"
+		}
+		return "jsx"
+	}
+}
+
 // GenerateIndexHTML creates the index.html file
 func GenerateIndexHTML(config models.Config) string {
-	ext := "jsx"
-	if config.Language == models.LangTypeScript {
-		ext = "tsx"
-	}
+	ext := getFileExtension(config)
 
 	return fmt.Sprintf(`<!doctype html>
 <html lang="en">
@@ -32,10 +53,7 @@ func GenerateIndexHTML(config models.Config) string {
 // GenerateMainFile creates the main entry file
 func GenerateMainFile(config models.Config) string {
 	isTS := config.Language == models.LangTypeScript
-	ext := "jsx"
-	if isTS {
-		ext = "tsx"
-	}
+	ext := getFileExtension(config)
 
 	if config.Framework == models.FrameworkReact {
 		var imports strings.Builder
