@@ -35,20 +35,18 @@ func getFileExtension(config models.Config) string {
 func getMainFileExtension(config models.Config) string {
 	isTS := config.Language == models.LangTypeScript
 
-	// Angular always uses .ts (no .tsx)
-	if config.Framework == models.FrameworkAngular {
-		return "ts"
-	}
-
-	// Vanilla uses plain .js or .ts (no JSX)
-	if config.Framework == models.FrameworkVanilla {
+	// Angular, Vanilla, Vue, and Svelte use plain .js or .ts (no JSX)
+	if config.Framework == models.FrameworkAngular ||
+		config.Framework == models.FrameworkVanilla ||
+		config.Framework == models.FrameworkVue ||
+		config.Framework == models.FrameworkSvelte {
 		if isTS {
 			return "ts"
 		}
 		return "js"
 	}
 
-	// All other frameworks (React, Vue, Svelte, Solid) use JSX/TSX for the main file
+	// React and Solid use JSX/TSX for the main file
 	if isTS {
 		return "tsx"
 	}

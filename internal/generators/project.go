@@ -173,34 +173,26 @@ func SetupProject(config models.Config) error {
 
 	// Generate main entry file
 	mainFile := GenerateMainFile(config)
-	ext := "jsx"
-	if config.Language == models.LangTypeScript {
-		ext = "tsx"
-	}
-
-	// Angular uses .ts extension always (no .tsx)
-	if config.Framework == models.FrameworkAngular {
-		ext = "ts"
-	}
-
-	if err := writeOrCollect(filepath.Join(projectPath, "src", fmt.Sprintf("main.%s", ext)), mainFile); err != nil {
+	mainExt := getMainFileExtension(config)
+	if err := writeOrCollect(filepath.Join(projectPath, "src", fmt.Sprintf("main.%s", mainExt)), mainFile); err != nil {
 		return fmt.Errorf("failed to write main file: %w", err)
 	}
 
 	// Generate App component
 	appFile := GenerateAppFile(config)
+	appExt := getFileExtension(config)
 
 	// Angular components go in app/ directory
 	if config.Framework == models.FrameworkAngular {
 		// Create app directory
-		if err := os.MkdirAll(filepath.Join(projectPath, "src", "app"), 0755); err != nil {
+		if err := mkdirOrCollect(filepath.Join(projectPath, "src", "app")); err != nil {
 			return fmt.Errorf("failed to create app directory: %w", err)
 		}
 		if err := writeOrCollect(filepath.Join(projectPath, "src", "app", "app.component.ts"), appFile); err != nil {
 			return fmt.Errorf("failed to write App component: %w", err)
 		}
 	} else {
-		if err := writeOrCollect(filepath.Join(projectPath, "src", fmt.Sprintf("App.%s", ext)), appFile); err != nil {
+		if err := writeOrCollect(filepath.Join(projectPath, "src", fmt.Sprintf("App.%s", appExt)), appFile); err != nil {
 			return fmt.Errorf("failed to write App file: %w", err)
 		}
 	}
