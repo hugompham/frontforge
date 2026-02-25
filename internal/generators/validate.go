@@ -34,10 +34,8 @@ func ValidateProject(projectPath string, config models.Config) []ValidationResul
 	// 3. Validate index.html references correct main file
 	results = append(results, validateIndexHTML(projectPath, config)...)
 
-	// 4. Validate Vite config exists for Vite-based frameworks
-	if isViteFramework(config.Framework) {
-		results = append(results, validateViteConfig(projectPath, config)...)
-	}
+	// 4. Validate Vite config exists
+	results = append(results, validateViteConfig(projectPath, config)...)
 
 	// 5. Validate TypeScript configs when language is TypeScript
 	if config.Language == models.LangTypeScript {
@@ -272,11 +270,13 @@ func validateTypeScriptConfigs(projectPath string) []ValidationResult {
 func getCoreFiles(config models.Config) []string {
 	files := []string{
 		"package.json",
-		"index.html",
 		".gitignore",
 		"README.md",
 		"eslint.config.js",
 	}
+
+	// Vite-based frameworks
+	files = append(files, "index.html")
 
 	// Add main file
 	ext := getMainFileExtension(config)
@@ -310,8 +310,7 @@ func getAppFileExtension(config models.Config) string {
 	}
 }
 
-// isViteFramework checks if the framework uses Vite
+// isViteFramework checks if the framework uses Vite as the direct build tool
 func isViteFramework(framework string) bool {
-	// All current frameworks use Vite
 	return true
 }

@@ -40,9 +40,10 @@ func PrepareTemplateData(config models.Config) TemplateData {
 	}
 
 	// Compute MountID
-	if config.Framework == models.FrameworkVue {
+	switch config.Framework {
+	case models.FrameworkVue:
 		data.MountID = "app"
-	} else {
+	default:
 		data.MountID = "root"
 	}
 
@@ -105,21 +106,15 @@ func Render(templatePath string, config models.Config) (string, error) {
 func computeMainFileExtension(config models.Config) string {
 	isTS := config.Language == models.LangTypeScript
 
-	// Angular always uses .ts (no .tsx)
-	if config.Framework == models.FrameworkAngular {
+	switch config.Framework {
+	case models.FrameworkAngular:
 		return "ts"
-	}
-
-	// Vanilla uses plain .js or .ts (no JSX)
-	if config.Framework == models.FrameworkVanilla {
+	case models.FrameworkVanilla:
 		if isTS {
 			return "ts"
 		}
 		return "js"
-	}
-
-	// React and Solid use .tsx for TypeScript
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkSolid {
+	case models.FrameworkReact, models.FrameworkSolid:
 		if isTS {
 			return "tsx"
 		}
@@ -169,7 +164,7 @@ func RenderESLintConfig(config models.Config) (string, error) {
 	case models.FrameworkVue:
 		templatePath = "config/eslint-vue.tmpl"
 	default:
-		// Svelte, Solid, Vanilla, Angular - use default config
+		// Svelte, Solid, Vanilla, Angular, Astro, SvelteKit - use default config
 		templatePath = "config/eslint-default.tmpl"
 	}
 

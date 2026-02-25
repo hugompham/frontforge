@@ -17,10 +17,16 @@ package generators
 import (
 	"encoding/json"
 	"fmt"
+	"frontforge/internal/generators/meta"
 	"frontforge/internal/models"
 	"frontforge/internal/templates"
 	"os"
 	"path/filepath"
+
+	// Register meta-framework generators via init()
+	_ "frontforge/internal/generators/astro"
+	_ "frontforge/internal/generators/nextjs"
+	_ "frontforge/internal/generators/sveltekit"
 )
 
 // SetupProject orchestrates the entire project generation
@@ -117,6 +123,17 @@ func SetupProject(config models.Config) error {
 		return os.MkdirAll(path, 0755)
 	}
 
+	// Meta-framework path: shell out to upstream CLI, then apply post-scaffold transforms
+	if models.IsMetaFramework(config.Framework) {
+		if err := meta.RunMetaScaffold(config); err != nil {
+			return err
+		}
+		success = true
+		return nil
+	}
+
+	// Vite-based framework path below
+
 	// Generate package.json
 	packageJSON := GeneratePackageJSON(config)
 	packageJSONPath := filepath.Join(projectPath, "package.json")
@@ -125,19 +142,17 @@ func SetupProject(config models.Config) error {
 	}
 	trackPath(packageJSONPath)
 
-	// Generate vite.config for all Vite-based frameworks
-	if config.Framework == models.FrameworkReact || config.Framework == models.FrameworkVue || config.Framework == models.FrameworkSvelte || config.Framework == models.FrameworkSolid || config.Framework == models.FrameworkAngular || config.Framework == models.FrameworkVanilla {
-		viteConfig := GenerateViteConfig(config)
-		ext := "js"
-		if config.Language == models.LangTypeScript {
-			ext = "ts"
-		}
-		if err := writeOrCollect(filepath.Join(projectPath, fmt.Sprintf("vite.config.%s", ext)), viteConfig); err != nil {
-			return fmt.Errorf("failed to write vite.config: %w", err)
-		}
+	// Generate vite.config
+	viteConfig := GenerateViteConfig(config)
+	ext := "js"
+	if config.Language == models.LangTypeScript {
+		ext = "ts"
+	}
+	if err := writeOrCollect(filepath.Join(projectPath, fmt.Sprintf("vite.config.%s", ext)), viteConfig); err != nil {
+		return fmt.Errorf("failed to write vite.config: %w", err)
 	}
 
-	// Generate TypeScript configs
+	// Generate TypeScript configs (Vite uses 3-file split)
 	if config.Language == models.LangTypeScript {
 		tsConfigs := GenerateTSConfig(config)
 		if err := writeOrCollectJSON(filepath.Join(projectPath, "tsconfig.json"), tsConfigs.Base); err != nil {
@@ -184,7 +199,6 @@ func SetupProject(config models.Config) error {
 
 	// Angular components go in app/ directory
 	if config.Framework == models.FrameworkAngular {
-		// Create app directory
 		if err := mkdirOrCollect(filepath.Join(projectPath, "src", "app")); err != nil {
 			return fmt.Errorf("failed to create app directory: %w", err)
 		}
@@ -215,7 +229,7 @@ func SetupProject(config models.Config) error {
 		return fmt.Errorf("failed to write README.md: %w", err)
 	}
 
-	// Generate Tailwind config if needed
+	// Generate styling files
 	if config.Styling == models.StylingTailwind {
 		indexCSS, err := templates.RenderStatic("static/index.css")
 		if err != nil {
@@ -226,7 +240,6 @@ func SetupProject(config models.Config) error {
 		}
 	}
 
-	// Generate CSS Modules example if needed
 	if config.Styling == models.StylingCSSModules {
 		appModuleCSS, err := templates.RenderStatic("static/App.module.css")
 		if err != nil {
@@ -237,7 +250,6 @@ func SetupProject(config models.Config) error {
 		}
 	}
 
-	// Generate Sass example if needed
 	if config.Styling == models.StylingSass {
 		stylesScss, err := templates.RenderStatic("static/styles.scss")
 		if err != nil {

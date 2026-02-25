@@ -57,7 +57,7 @@ type TSConfigSet struct {
 	Node map[string]interface{}
 }
 
-// GenerateTSConfig creates TypeScript configuration
+// GenerateTSConfig creates TypeScript configuration for Vite-based frameworks
 func GenerateTSConfig(config models.Config) TSConfigSet {
 	base := map[string]interface{}{
 		"files": []string{},
@@ -132,7 +132,7 @@ func GenerateTSConfig(config models.Config) TSConfigSet {
 	}
 }
 
-// GenerateProjectStructure creates the directory structure
+// GenerateProjectStructure creates the directory structure for Vite-based frameworks
 func GenerateProjectStructure(
 	projectPath string,
 	config models.Config,
