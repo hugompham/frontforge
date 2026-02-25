@@ -1,6 +1,6 @@
 {
   "name": "frontforge",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A beautiful, interactive CLI for scaffolding modern frontend projects",
   "keywords": [
     "cli",
@@ -11,6 +11,9 @@
     "angular",
     "svelte",
     "solid",
+    "nextjs",
+    "astro",
+    "sveltekit",
     "vite",
     "typescript",
     "tui",
