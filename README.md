@@ -77,7 +77,7 @@ frontforge -help
 Choose from multiple options for each:
 
 - **Languages**: TypeScript, JavaScript
-- **Frameworks**: React, Vue 3, Angular, Svelte 5, Solid, Vanilla
+- **Frameworks**: React, Vue 3, Angular, Svelte 5, Solid, Vanilla, Next.js, Astro, SvelteKit
 - **Styling**: Tailwind CSS, CSS Modules, Sass, Styled Components, Vanilla CSS
 - **Routing**: React Router, TanStack Router, Vue Router, Angular Router, and more
 - **Testing**: Vitest, Jest, or None
@@ -87,12 +87,18 @@ Choose from multiple options for each:
 
 ## Supported Frameworks
 
-- React 19 (with Vite)
+### Vite-based
+- React 19
 - Vue 3.5
 - Angular (latest)
 - Svelte 5
 - Solid
 - Vanilla JavaScript/TypeScript
+
+### Meta-frameworks
+- Next.js 15 (React, App Router)
+- Astro 5 (content-focused)
+- SvelteKit 2 (Svelte meta-framework)
 
 ## Package Versions
 
@@ -155,6 +161,19 @@ Note: The CLI itself is a native Go binary, so Go is not required.
 - Best practices built-in
 - No dependency conflicts
 - Tested package combinations
+
+## Roadmap
+
+| Status | Feature | Description |
+|--------|---------|-------------|
+| Planned | Plugin system | Custom templates/presets via `.frontforge/` config |
+| Planned | `frontforge update` | Bump package versions in existing projects |
+| Planned | Git repo templates | Scaffold from remote template repos |
+| Planned | Monorepo support | Turborepo/Nx workspace scaffolding |
+| Planned | Config presets | Save/share custom configurations |
+| Planned | Homebrew tap | `brew install frontforge` |
+| Planned | VS Code extension | GUI for project scaffolding |
+| Planned | `frontforge add` | Add features to existing projects (e.g., add Tailwind) |
 
 ## Development
 
