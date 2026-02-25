@@ -192,6 +192,12 @@ func normalizeFramework(flag string) string {
 		return "Solid"
 	case "vanilla":
 		return "Vanilla"
+	case "nextjs", "next", "next.js":
+		return "Next.js"
+	case "astro":
+		return "Astro"
+	case "sveltekit", "svelte-kit":
+		return "SvelteKit"
 	default:
 		return ""
 	}
