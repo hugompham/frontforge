@@ -191,6 +191,10 @@ func (m *Model) createForm() *huh.Form {
 					huh.NewOption("Svelte", models.FrameworkSvelte),
 					huh.NewOption("Solid", models.FrameworkSolid),
 					huh.NewOption("Vanilla (no framework)", models.FrameworkVanilla),
+					// Meta-frameworks (shell out to upstream CLIs)
+					huh.NewOption("Next.js (React)", models.FrameworkNextJS),
+					huh.NewOption("Astro (content-focused)", models.FrameworkAstro),
+					huh.NewOption("SvelteKit (Svelte)", models.FrameworkSvelteKit),
 				).
 				Value(&m.formState.Framework),
 		).WithHideFunc(func() bool {
@@ -212,7 +216,7 @@ func (m *Model) createForm() *huh.Form {
 			return m.formState.SetupMode == string(models.SetupModeQuick)
 		}),
 
-		// Group 6: Styling (only shown in custom mode)
+		// Group 6: Styling for Vite-based frameworks (only shown in custom mode)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("How would you like to style your app?").
@@ -226,7 +230,22 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.Styling),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
+		}),
+
+		// Group 6-meta: Styling for meta-frameworks (filtered by OptionMatrix)
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("How would you like to style your app?").
+				Options(
+					huh.NewOption("Tailwind CSS", models.StylingTailwind),
+					huh.NewOption("CSS Modules", models.StylingCSSModules),
+					huh.NewOption("Sass/SCSS", models.StylingSass),
+					huh.NewOption("Vanilla CSS", models.StylingVanilla),
+				).
+				Value(&m.formState.Styling),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || !m.isMetaSelected()
 		}),
 
 		// Group 6a: UI Component Library for React (only shown in custom mode)
@@ -243,7 +262,7 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.UILibrary),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact || m.isMetaSelected()
 		}),
 
 		// Group 6b: UI Component Library for Vue (only shown in custom mode)
@@ -277,7 +296,7 @@ func (m *Model) createForm() *huh.Form {
 			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkAngular
 		}),
 
-		// Group 7: Routing for React (only shown in custom mode)
+		// Group 7: Routing for React (only shown in custom mode, not meta-frameworks)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Routing solution").
@@ -289,7 +308,7 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.Routing),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact || m.isMetaSelected()
 		}),
 
 		// Group 7b: Routing for Svelte (only shown in custom mode)
@@ -318,7 +337,7 @@ func (m *Model) createForm() *huh.Form {
 			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkSolid
 		}),
 
-		// Group 8: Testing (only shown in custom mode)
+		// Group 8: Testing for Vite-based (only shown in custom mode)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Testing framework").
@@ -329,10 +348,51 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.Testing),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
 		}),
 
-		// Group 9: State management for React (only shown in custom mode)
+		// Group 8-meta: Testing for Next.js (Vitest + Jest + None)
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Testing framework").
+				Options(
+					huh.NewOption("Vitest (fast, Vite-native)", models.TestingVitest),
+					huh.NewOption("Jest", models.TestingJest),
+					huh.NewOption("None (set up later)", models.TestingNone),
+				).
+				Value(&m.formState.Testing),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkNextJS
+		}),
+
+		// Group 8-meta: Testing for SvelteKit (Vitest + Playwright + None)
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Testing framework").
+				Options(
+					huh.NewOption("Vitest (fast, Vite-native)", models.TestingVitest),
+					huh.NewOption("Playwright (E2E)", models.TestingPlaywright),
+					huh.NewOption("None (set up later)", models.TestingNone),
+				).
+				Value(&m.formState.Testing),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkSvelteKit
+		}),
+
+		// Group 8-meta: Testing for Astro (Vitest + None)
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Testing framework").
+				Options(
+					huh.NewOption("Vitest (fast, Vite-native)", models.TestingVitest),
+					huh.NewOption("None (set up later)", models.TestingNone),
+				).
+				Value(&m.formState.Testing),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkAstro
+		}),
+
+		// Group 9: State management for React (only shown in custom mode, not meta)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("State management").
@@ -344,7 +404,35 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.StateManagement),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact || m.isMetaSelected()
+		}),
+
+		// Group 9-meta: State management for Next.js
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("State management").
+				Options(
+					huh.NewOption("Zustand (lightweight)", models.StateZustand),
+					huh.NewOption("Redux Toolkit", models.StateReduxToolkit),
+					huh.NewOption("Context API only", models.StateContextAPI),
+					huh.NewOption("None", models.StateNone),
+				).
+				Value(&m.formState.StateManagement),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkNextJS
+		}),
+
+		// Group 9-meta: State management for SvelteKit
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("State management").
+				Options(
+					huh.NewOption("Svelte Stores (built-in)", models.StateSvelteStores),
+					huh.NewOption("None", models.StateNone),
+				).
+				Value(&m.formState.StateManagement),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkSvelteKit
 		}),
 
 		// Group 9b: State management for Vue (only shown in custom mode)
@@ -400,7 +488,7 @@ func (m *Model) createForm() *huh.Form {
 			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkAngular
 		}),
 
-		// Group 9f: Form Management for React (only shown in custom mode)
+		// Group 9f: Form Management for React (only shown in custom mode, not meta)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Form Management").
@@ -412,7 +500,7 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.FormManagement),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkReact || m.isMetaSelected()
 		}),
 
 		// Group 9g: Form Management for Vue (only shown in custom mode)
@@ -428,7 +516,7 @@ func (m *Model) createForm() *huh.Form {
 			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkVue
 		}),
 
-		// Group 10: Data fetching (only shown in custom mode)
+		// Group 10: Data fetching for Vite-based (only shown in custom mode)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Data fetching approach").
@@ -441,10 +529,40 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.DataFetching),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
 		}),
 
-		// Group 10a: Animation (only shown in custom mode)
+		// Group 10-meta: Data fetching for Next.js (TanStack + SWR + Axios + Fetch + None)
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Data fetching approach").
+				Options(
+					huh.NewOption("TanStack Query", models.DataTanStackQuery),
+					huh.NewOption("SWR", models.DataSWR),
+					huh.NewOption("Axios", models.DataAxios),
+					huh.NewOption("Fetch API", models.DataFetchAPI),
+					huh.NewOption("None (no API calls)", models.DataNone),
+				).
+				Value(&m.formState.DataFetching),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkNextJS
+		}),
+
+		// Group 10-meta: Data fetching for SvelteKit (TanStack + Fetch + None)
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Data fetching approach").
+				Options(
+					huh.NewOption("TanStack Query", models.DataTanStackQuery),
+					huh.NewOption("Fetch API", models.DataFetchAPI),
+					huh.NewOption("None (no API calls)", models.DataNone),
+				).
+				Value(&m.formState.DataFetching),
+		).WithHideFunc(func() bool {
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.formState.Framework != models.FrameworkSvelteKit
+		}),
+
+		// Group 10a: Animation (only shown in custom mode, not meta)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Animation library").
@@ -457,10 +575,10 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.Animation),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
 		}),
 
-		// Group 10b: Icons (only shown in custom mode)
+		// Group 10b: Icons (only shown in custom mode, not meta)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Icon library").
@@ -473,10 +591,10 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.Icons),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
 		}),
 
-		// Group 10c: Data Visualization (only shown in custom mode)
+		// Group 10c: Data Visualization (only shown in custom mode, not meta)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Data visualization").
@@ -489,10 +607,10 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.DataViz),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
 		}),
 
-		// Group 10d: Utilities (only shown in custom mode)
+		// Group 10d: Utilities (only shown in custom mode, not meta)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Utility library").
@@ -504,10 +622,10 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.Utilities),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
 		}),
 
-		// Group 10e: Internationalization (only shown in custom mode)
+		// Group 10e: Internationalization (only shown in custom mode, not meta)
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Internationalization (i18n)").
@@ -518,7 +636,7 @@ func (m *Model) createForm() *huh.Form {
 				).
 				Value(&m.formState.I18n),
 		).WithHideFunc(func() bool {
-			return m.formState.SetupMode == string(models.SetupModeQuick)
+			return m.formState.SetupMode == string(models.SetupModeQuick) || m.isMetaSelected()
 		}),
 
 		// Group 11: Folder structure (only shown in custom mode)
@@ -540,6 +658,11 @@ func (m *Model) createForm() *huh.Form {
 	form.WithTheme(ForgeTheme())
 
 	return form
+}
+
+// isMetaSelected returns true if the current framework selection is a meta-framework
+func (m *Model) isMetaSelected() bool {
+	return models.IsMetaFramework(m.formState.Framework)
 }
 
 // validateProjectName checks if project name is valid
@@ -636,6 +759,21 @@ func (m *Model) applyFormDataToConfig() {
 	case models.FrameworkReact:
 		m.config.Routing = m.formState.Routing
 		m.config.StateManagement = m.formState.StateManagement
+	case models.FrameworkNextJS:
+		m.config.Routing = models.RoutingNextJSAppRouter
+		m.config.StateManagement = m.formState.StateManagement
+		m.config.UILibrary = models.UILibraryNone
+		m.config.FormManagement = models.FormNone
+	case models.FrameworkAstro:
+		m.config.Routing = models.RoutingAstroPages
+		m.config.StateManagement = models.StateNone
+		m.config.UILibrary = models.UILibraryNone
+		m.config.FormManagement = models.FormNone
+	case models.FrameworkSvelteKit:
+		m.config.Routing = models.RoutingSvelteKit
+		m.config.StateManagement = models.StateSvelteStores
+		m.config.UILibrary = models.UILibraryNone
+		m.config.FormManagement = models.FormNone
 	}
 }
 
