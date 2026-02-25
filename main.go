@@ -36,10 +36,22 @@ func main() {
 	flag.BoolVar(&dryRun, "dry-run", false, "Preview mode: show what files would be generated without writing them")
 	flag.BoolVar(&autoInstall, "install", false, "Automatically run package manager install after generation")
 	flag.StringVar(&projectName, "name", "", "Project name (required for non-interactive mode)")
-	flag.StringVar(&framework, "framework", "", "Framework: react, vue, angular, svelte, solid, vanilla")
+	flag.StringVar(&framework, "framework", "", "Framework: react, vue, angular, svelte, solid, vanilla, nextjs, astro, sveltekit")
 	flag.StringVar(&language, "lang", "", "Language: ts, js")
 	flag.StringVar(&packageManager, "pm", "", "Package manager: npm, yarn, pnpm, bun")
 	flag.StringVar(&styling, "styling", "", "Styling: tailwind, bootstrap, css-modules, sass, styled, vanilla")
+
+	// Additional option flags
+	var testing string
+	var stateManagement string
+	var dataFetching string
+	flag.StringVar(&testing, "testing", "", "Testing: vitest, jest, playwright, none")
+	flag.StringVar(&stateManagement, "state", "", "State management: zustand, redux, pinia, svelte-stores, context, none")
+	flag.StringVar(&dataFetching, "data", "", "Data fetching: tanstack-query, swr, axios, fetch, none")
+
+	// Meta-framework debugging
+	var noScaffold bool
+	flag.BoolVar(&noScaffold, "no-scaffold", false, "Skip upstream CLI scaffold (meta-frameworks only, for debugging)")
 
 	flag.Parse()
 
@@ -51,7 +63,7 @@ func main() {
 
 	// Check if running in non-interactive mode
 	if quickMode || projectName != "" {
-		runNonInteractive(projectPath, projectName, quickMode, dryRun, autoInstall, framework, language, packageManager, styling)
+		runNonInteractive(projectPath, projectName, quickMode, dryRun, autoInstall, noScaffold, framework, language, packageManager, styling, testing, stateManagement, dataFetching)
 		return
 	}
 
@@ -99,7 +111,7 @@ func main() {
 }
 
 // runNonInteractive generates a project without the interactive TUI
-func runNonInteractive(projectPath, projectName string, quickMode, dryRun, autoInstall bool, framework, language, packageManager, styling string) {
+func runNonInteractive(projectPath, projectName string, quickMode, dryRun, autoInstall, noScaffold bool, framework, language, packageManager, styling, testing, stateManagement, dataFetching string) {
 	// Validate project name is provided
 	if projectName == "" {
 		fmt.Println("Error: -name flag is required for non-interactive mode")
@@ -118,6 +130,7 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun, autoI
 	config.ProjectName = projectName
 	config.DryRun = dryRun
 	config.AutoInstall = autoInstall
+	config.NoScaffold = noScaffold
 
 	// Apply overrides if provided
 	if framework != "" {
@@ -126,7 +139,7 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun, autoI
 			// Adjust framework-specific defaults
 			adjustFrameworkDefaults(&config)
 		} else {
-			fmt.Printf("Error: Invalid framework '%s'. Valid options: react, vue, angular, svelte, solid, vanilla\n", framework)
+			fmt.Printf("Error: Invalid framework '%s'. Valid options: react, vue, angular, svelte, solid, vanilla, nextjs, astro, sveltekit\n", framework)
 			os.Exit(1)
 		}
 	}
@@ -154,6 +167,33 @@ func runNonInteractive(projectPath, projectName string, quickMode, dryRun, autoI
 			config.Styling = st
 		} else {
 			fmt.Printf("Error: Invalid styling '%s'. Valid options: tailwind, bootstrap, css-modules, sass, styled, vanilla\n", styling)
+			os.Exit(1)
+		}
+	}
+
+	if testing != "" {
+		if t := parseTesting(testing); t != "" {
+			config.Testing = t
+		} else {
+			fmt.Printf("Error: Invalid testing '%s'. Valid options: vitest, jest, playwright, none\n", testing)
+			os.Exit(1)
+		}
+	}
+
+	if stateManagement != "" {
+		if sm := parseStateManagement(stateManagement); sm != "" {
+			config.StateManagement = sm
+		} else {
+			fmt.Printf("Error: Invalid state management '%s'. Valid options: zustand, redux, pinia, svelte-stores, context, none\n", stateManagement)
+			os.Exit(1)
+		}
+	}
+
+	if dataFetching != "" {
+		if df := parseDataFetching(dataFetching); df != "" {
+			config.DataFetching = df
+		} else {
+			fmt.Printf("Error: Invalid data fetching '%s'. Valid options: tanstack-query, swr, axios, fetch, none\n", dataFetching)
 			os.Exit(1)
 		}
 	}
@@ -290,6 +330,11 @@ func isValidProjectName(name string) bool {
 
 // validateCompatibility checks for incompatible framework + library combinations
 func validateCompatibility(config *models.Config) error {
+	// Meta-frameworks have built-in routing; skip most compatibility checks
+	if models.IsMetaFramework(config.Framework) {
+		return nil
+	}
+
 	// Validate routing compatibility
 	switch config.Framework {
 	case models.FrameworkReact:
@@ -397,6 +442,12 @@ func parseFramework(input string) string {
 		return models.FrameworkSolid
 	case "vanilla":
 		return models.FrameworkVanilla
+	case "nextjs", "next", "next.js":
+		return models.FrameworkNextJS
+	case "astro":
+		return models.FrameworkAstro
+	case "sveltekit", "svelte-kit":
+		return models.FrameworkSvelteKit
 	default:
 		return ""
 	}
@@ -450,6 +501,60 @@ func parseStyling(input string) string {
 	}
 }
 
+// parseTesting converts a testing name to the full constant
+func parseTesting(input string) string {
+	switch strings.ToLower(input) {
+	case "vitest":
+		return models.TestingVitest
+	case "jest":
+		return models.TestingJest
+	case "playwright":
+		return models.TestingPlaywright
+	case "none":
+		return models.TestingNone
+	default:
+		return ""
+	}
+}
+
+// parseStateManagement converts a state management name to the full constant
+func parseStateManagement(input string) string {
+	switch strings.ToLower(input) {
+	case "zustand":
+		return models.StateZustand
+	case "redux", "redux-toolkit":
+		return models.StateReduxToolkit
+	case "pinia":
+		return models.StatePinia
+	case "svelte-stores", "svelte":
+		return models.StateSvelteStores
+	case "context", "context-api":
+		return models.StateContextAPI
+	case "none":
+		return models.StateNone
+	default:
+		return ""
+	}
+}
+
+// parseDataFetching converts a data fetching name to the full constant
+func parseDataFetching(input string) string {
+	switch strings.ToLower(input) {
+	case "tanstack-query", "tanstack", "react-query":
+		return models.DataTanStackQuery
+	case "swr":
+		return models.DataSWR
+	case "axios":
+		return models.DataAxios
+	case "fetch", "fetch-api":
+		return models.DataFetchAPI
+	case "none":
+		return models.DataNone
+	default:
+		return ""
+	}
+}
+
 // adjustFrameworkDefaults sets sensible defaults for non-React frameworks
 func adjustFrameworkDefaults(config *models.Config) {
 	switch config.Framework {
@@ -498,6 +603,33 @@ func adjustFrameworkDefaults(config *models.Config) {
 		config.Animation = models.AnimationNone
 		config.Icons = models.IconsNone
 		config.I18n = models.I18nNone
+	case models.FrameworkNextJS:
+		config.Routing = models.RoutingNextJSAppRouter
+		config.StateManagement = models.StateNone
+		config.UILibrary = models.UILibraryNone
+		config.FormManagement = models.FormNone
+		config.DataFetching = models.DataFetchAPI
+		config.Animation = models.AnimationNone
+		config.Icons = models.IconsLucide
+		config.I18n = models.I18nNone
+	case models.FrameworkAstro:
+		config.Routing = models.RoutingAstroPages
+		config.StateManagement = models.StateNone
+		config.UILibrary = models.UILibraryNone
+		config.FormManagement = models.FormNone
+		config.DataFetching = models.DataFetchAPI
+		config.Animation = models.AnimationNone
+		config.Icons = models.IconsNone
+		config.I18n = models.I18nNone
+	case models.FrameworkSvelteKit:
+		config.Routing = models.RoutingSvelteKit
+		config.StateManagement = models.StateSvelteStores
+		config.UILibrary = models.UILibraryNone
+		config.FormManagement = models.FormNone
+		config.DataFetching = models.DataFetchAPI
+		config.Animation = models.AnimationNone
+		config.Icons = models.IconsLucide
+		config.I18n = models.I18nNone
 	}
 }
 
@@ -533,10 +665,15 @@ func printHelp() {
 	fmt.Println("  Non-Interactive:")
 	fmt.Println("    -quick         Use quick preset and skip interactive mode")
 	fmt.Println("    -name <name>   Project name (required for non-interactive)")
-	fmt.Println("    -framework     Framework: react, vue, angular, svelte, solid, vanilla")
+	fmt.Println("    -framework     Framework: react, vue, angular, svelte, solid, vanilla,")
+	fmt.Println("                             nextjs, astro, sveltekit")
 	fmt.Println("    -lang          Language: ts, js (default: ts)")
 	fmt.Println("    -pm            Package manager: npm, yarn, pnpm, bun (default: npm)")
 	fmt.Println("    -styling       Styling: tailwind, bootstrap, css-modules, sass, styled, vanilla")
+	fmt.Println("    -testing       Testing: vitest, jest, playwright, none")
+	fmt.Println("    -state         State: zustand, redux, pinia, svelte-stores, context, none")
+	fmt.Println("    -data          Data fetching: tanstack-query, swr, axios, fetch, none")
+	fmt.Println("    -no-scaffold   Skip upstream CLI (meta-frameworks only, for debugging)")
 	fmt.Println()
 	fmt.Println("EXAMPLES:")
 	fmt.Println("  Interactive mode:")
@@ -551,6 +688,15 @@ func printHelp() {
 	fmt.Println()
 	fmt.Println("  Svelte project with JavaScript:")
 	fmt.Println("    frontforge -quick -name my-svelte-app -framework svelte -lang js")
+	fmt.Println()
+	fmt.Println("  Next.js project:")
+	fmt.Println("    frontforge -quick -name my-next-app -framework nextjs")
+	fmt.Println()
+	fmt.Println("  Astro project:")
+	fmt.Println("    frontforge -quick -name my-astro-app -framework astro")
+	fmt.Println()
+	fmt.Println("  SvelteKit project:")
+	fmt.Println("    frontforge -quick -name my-sveltekit-app -framework sveltekit")
 	fmt.Println()
 	fmt.Println("  Project in current directory:")
 	fmt.Println("    frontforge -quick -name my-app -path .")
