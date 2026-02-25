@@ -32,6 +32,7 @@ type Config struct {
 	Structure       string
 	DryRun          bool // Preview mode - show what would be generated without writing files
 	AutoInstall     bool // Automatically run package manager install after generation
+	NoScaffold      bool // Skip upstream CLI scaffold (meta-frameworks only, for debugging)
 }
 
 // SetupMode defines quick or custom setup
@@ -56,7 +57,21 @@ const (
 	FrameworkSvelte  = "Svelte"
 	FrameworkSolid   = "Solid"
 	FrameworkVanilla = "Vanilla"
+
+	// Meta-frameworks (own build systems, not plain Vite)
+	FrameworkNextJS    = "Next.js"
+	FrameworkAstro     = "Astro"
+	FrameworkSvelteKit = "SvelteKit"
 )
+
+// IsMetaFramework returns true for frameworks with their own build system
+func IsMetaFramework(framework string) bool {
+	switch framework {
+	case FrameworkNextJS, FrameworkAstro, FrameworkSvelteKit:
+		return true
+	}
+	return false
+}
 
 // Package managers
 const (
@@ -78,21 +93,24 @@ const (
 
 // Routing options
 const (
-	RoutingReactRouter    = "React Router"
-	RoutingTanStackRouter = "TanStack Router"
-	RoutingFileBased      = "File-based routing"
-	RoutingVueRouter      = "Vue Router"
-	RoutingAngularRouter  = "Angular Router"
-	RoutingSvelteKit      = "SvelteKit"
-	RoutingSolidRouter    = "Solid Router"
-	RoutingNone           = "None"
+	RoutingReactRouter     = "React Router"
+	RoutingTanStackRouter  = "TanStack Router"
+	RoutingFileBased       = "File-based routing"
+	RoutingVueRouter       = "Vue Router"
+	RoutingAngularRouter   = "Angular Router"
+	RoutingSvelteKit       = "SvelteKit"
+	RoutingSolidRouter     = "Solid Router"
+	RoutingNextJSAppRouter = "Next.js App Router"
+	RoutingAstroPages      = "Astro Pages"
+	RoutingNone            = "None"
 )
 
 // Testing options
 const (
-	TestingVitest = "Vitest"
-	TestingJest   = "Jest"
-	TestingNone   = "None"
+	TestingVitest     = "Vitest"
+	TestingJest       = "Jest"
+	TestingPlaywright = "Playwright"
+	TestingNone       = "None"
 )
 
 // State management options
